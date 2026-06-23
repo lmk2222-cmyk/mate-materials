@@ -1,0 +1,703 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>호도법: 각을 실수에 대응시키기</title>
+<style>
+  /* ── 선생님이 바꾸기 쉬운 색/값들 ───────────────────────── */
+  :root{
+    --ink:#212529; --muted:#868e96;
+    --circle:#1971c2;            /* 단위원 색 */
+    --hi:#f76707;                /* 호 · 선분 · 점 강조색(좌우 동일) */
+    --hi-soft:rgba(247,103,7,.14);
+    --grid:#e9ecef; --axis:#adb5bd; --line:#343a40;
+    --card:#f8f9fa; --border:#dee2e6;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:24px 18px 40px;
+    font-family:"Pretendard","Segoe UI",system-ui,-apple-system,sans-serif;
+    color:var(--ink); background:#fff; line-height:1.5;
+  }
+  .wrap{max-width:1200px; margin:0 auto}
+  header h1{font-size:24px; margin:0 0 4px}
+  header p{margin:0; color:var(--muted); font-size:15px}
+  .hint{margin:14px 0 8px; font-size:14px; color:var(--muted)}
+  .stage{
+    border:1px solid var(--border); border-radius:14px; overflow:hidden;
+    box-shadow:0 1px 3px rgba(0,0,0,.06); background:#fff;
+  }
+  canvas{display:block; width:100%; touch-action:none; user-select:none}
+
+  /* 값 표시 카드 */
+  .readout{display:flex; gap:12px; margin:16px 0 6px; flex-wrap:wrap}
+  .ro{flex:1 1 0; min-width:150px; background:var(--card);
+      border:1px solid var(--border); border-radius:12px; padding:12px 16px}
+  .ro.key{border-color:var(--hi); box-shadow:0 0 0 2px var(--hi-soft)}
+  .ro .lab{font-size:13px; color:var(--muted)}
+  .ro .val{font-size:26px; font-weight:700; letter-spacing:.3px}
+  .ro .sub{font-size:13px; color:var(--muted)}
+  .note{font-size:14px; color:var(--ink); background:var(--hi-soft);
+        border-radius:10px; padding:10px 14px; margin:6px 0 18px}
+
+  /* 컨트롤 */
+  .controls{display:flex; flex-direction:column; gap:14px}
+  .row{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .row .cap{font-size:14px; color:var(--muted); min-width:92px}
+  button.angle{
+    font-size:13px; padding:5px 9px; border:1px solid var(--border);
+    background:#fff; border-radius:8px; cursor:pointer;
+  }
+  button.angle:hover{background:var(--card)}
+  button.primary{
+    font-size:15px; font-weight:600; padding:9px 18px; cursor:pointer;
+    color:#fff; background:var(--hi); border:none; border-radius:10px;
+  }
+  button.primary:disabled{opacity:.45; cursor:default}
+  button.ghost{
+    font-size:14px; padding:8px 14px; cursor:pointer;
+    background:#fff; border:1px solid var(--border); border-radius:10px;
+  }
+  label.toggle{display:inline-flex; align-items:center; gap:7px; font-size:14px; cursor:pointer}
+  footer{margin-top:26px; font-size:13px; color:var(--muted); line-height:1.7}
+  footer b{color:var(--ink)}
+  .teach{font-size:13px; color:var(--muted); line-height:1.7; background:var(--card);
+         border:1px solid var(--border); border-radius:10px; padding:12px 16px; margin:12px 0 14px}
+  .teach b{color:var(--ink)}
+
+  /* 탐구 섹션 */
+  .sec-div{border:none; border-top:1px dashed var(--border); margin:44px 0 10px}
+  header.sec h1{font-size:22px; margin:0 0 4px}
+  header.sec p{margin:0; color:var(--muted); font-size:15px}
+  .ro.teal{border-color:#0ca678; box-shadow:0 0 0 2px rgba(12,166,120,.14)}
+  .qtable{border-collapse:collapse; margin:14px 0 4px; font-size:15px}
+  .qtable th,.qtable td{border:1px solid var(--border); padding:8px 18px; text-align:center}
+  .qtable th{background:var(--card); color:var(--muted); font-weight:600}
+  .qtable td:first-child,.qtable th:first-child{color:var(--muted)}
+  .qtable .col-d{background:rgba(12,166,120,.12); font-weight:700; color:#0a7a59}
+  input[type=range]{width:220px; accent-color:#0ca678}
+  #q_def{background:rgba(12,166,120,.12)}
+  .hidden{display:none}
+  /* 모바일/터치: 탭 영역 키우기 */
+  @media (max-width:640px){
+    button.angle{padding:9px 12px; font-size:14px}
+    button.primary,button.ghost{padding:12px 16px; font-size:15px}
+    label.toggle{font-size:15px}
+    input[type=range]{width:100%}
+    .ro .val{font-size:22px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>호도법 — 각을 실수에 대응시키기</h1>
+    <p>왼쪽 단위원 위의 점 &nbsp;↦&nbsp; 오른쪽 수직선 위의 실수</p>
+  </header>
+
+  <div class="teach">
+    <b>수업 포인트</b> · 육십분법은 한 바퀴를 360등분한 약속일 뿐이지만, 호도법은 단위원에서 <b>각이 자르는 호의 길이(실수)</b>로 각을 잰다.
+    그래서 모든 각은 하나의 실수에 대응하고, 삼각함수를 <b>실수에서 실수로 가는 함수</b>로 다룰 수 있게 된다.<br>
+    <b>‘한 바퀴 넘기기’</b>를 켜면 같은 점에 여러 실수가 대응함을, <b>‘음의 방향’</b>을 켜면 음의 실수까지 대응함을 보여줄 수 있다.
+  </div>
+
+  <p class="hint">원 위의 점을 <b>드래그</b>하거나 원의 한 곳을 <b>클릭</b>해 보세요. 손을 떼는 순간 호가 직선으로 <b>펴지며</b> 대응하는 실수를 보여줍니다.</p>
+
+  <div class="stage"><canvas id="board"></canvas></div>
+
+  <div class="readout">
+    <div class="ro"><div class="lab">각도 (육십분법)</div><div class="val" id="vDeg">–</div></div>
+    <div class="ro key"><div class="lab">호의 길이 ℓ</div><div class="val" id="vArc">–</div><div class="sub">각에 대응하는 하나의 실수</div></div>
+  </div>
+  <div class="note">왼쪽 원에서 각을 움직이면, 그 각이 자르는 <b>호의 길이</b> — 즉 각에 대응하는 <b>하나의 실수</b> — 가 오른쪽 수직선에 나타납니다.</div>
+
+  <div class="controls">
+    <div class="row"><span class="cap">특수각으로 이동</span><span id="angleBtns" class="row" style="gap:6px"></span></div>
+    <div class="row">
+      <label class="toggle"><input type="checkbox" id="mt"> 한 바퀴 넘기기</label>
+      <label class="toggle"><input type="checkbox" id="neg"> 음의 방향(시계 방향)</label>
+      <button class="ghost" id="resetBtn">처음으로</button>
+    </div>
+  </div>
+
+  <hr class="sec-div" />
+  <header class="sec">
+    <h1>탐구 — 원의 크기가 달라지면?</h1>
+    <p>단위원이 아닌 원에서도 <b>호의 길이</b>를 그대로 각의 크기로 써도 될까?</p>
+  </header>
+  <p class="hint">바깥 원의 점을 <b>드래그</b>해 보세요. 같은 각인데 <b>안쪽 원(r=1)</b>과 <b>바깥 원</b>의 호의 길이가 어떻게 다른지 비교합니다.</p>
+
+  <div class="stage"><canvas id="board2"></canvas></div>
+
+  <div class="readout">
+    <div class="ro"><div class="lab">각도</div><div class="val" id="q_deg">–</div></div>
+    <div class="ro"><div class="lab">안쪽 원(r=1) 호의 길이 ℓ₁</div><div class="val" id="q_l1" style="color:#f76707">–</div></div>
+    <div class="ro teal"><div class="lab" id="q_l2lab">바깥 원(r = 2.0) 호의 길이 ℓ₂</div><div class="val" id="q_l2" style="color:#0ca678">–</div></div>
+  </div>
+
+  <table class="qtable">
+    <tr><th></th><th>반지름 r</th><th>호의 길이 ℓ</th></tr>
+    <tr><td>안쪽 원</td><td>1</td><td id="t_l1">–</td></tr>
+    <tr><td>바깥 원</td><td id="t_r">2.0</td><td id="t_l2">–</td></tr>
+  </table>
+
+  <div class="controls">
+    <div class="row"><span class="cap">바깥 원 반지름 r</span>
+      <input type="range" id="q_radius" min="1.5" max="3" step="0.1" value="2"><b id="q_rval">2.0</b>
+      <button class="ghost" id="q_reset">처음으로</button>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>생각해 보기</b> · 같은 각인데 호의 길이 ℓ은 원이 커질수록 함께 커집니다. 그렇다면 <b>원의 크기가 달라져도 변하지 않는 값</b>은 무엇일까요? 아래 <b>‘÷ 반지름 해보기’</b> 를 눌러 확인해 보세요.
+  </div>
+
+  <div class="controls">
+    <div class="row">
+      <button class="primary" id="q_norm" style="background:#0ca678">÷ 반지름 해보기</button>
+    </div>
+  </div>
+  <div class="note hidden" id="q_def">
+    <b>정의</b> · 원의 크기와 상관없이 일정한 값 <b>ℓ ÷ r</b> 로 각의 크기를 정의합니다 → &nbsp;<b style="font-size:18px">θ = ℓ / r</b>&nbsp; 이것이 <b>호도법(라디안)</b>입니다. 단위원(r = 1)에서는 θ = ℓ 이 되어, 앞 활동에서 <b>호의 길이가 곧 각의 크기</b>였습니다.<br>
+    또한 θ = ℓ / r 은 <b>(길이) ÷ (길이)</b> 라서 단위가 서로 약분되어 사라집니다. 그래서 라디안은 <b>단위를 따로 붙이지 않고</b> π/3, 1.5 처럼 수만 씁니다.
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const TAU = Math.PI*2;
+  const POS = '#f76707', NEG = '#1971c2';                    // 양의 방향=주황, 음의 방향=파랑
+  const CIRC = '#6c757d', RAD = '#adb5bd', GRAY = '#868e96';  // 원·반지름·중심각(회색)
+  const AXIS = '#adb5bd', GRID='#e9ecef', LINE='#343a40', MUTED='#868e96', INK='#212529';
+
+  // ── 상태 ──────────────────────────────────────────────
+  const INIT_T = 1.0;          // 처음 보여줄 값: 1 라디안 ("실수 1에 대응하는 각은?") — 바꾸려면 여기 수정
+  let t = INIT_T;              // 현재 실수(부호 있는 라디안/유향 호의 길이)
+  let multiTurn = false, negative = false;
+  let minT = 0, maxT = TAU;
+  let dragging = false, prevRaw = 0;
+  const anim = {active:false, start:0, dur:1600, u:0};
+  let showIntro = true;                       // 초기 "호의 길이=반지름" 강조 표시
+  const hi     = ()=> t<0 ? NEG : POS;        // 부호에 따른 강조색
+  const hiSoft = ()=> t<0 ? 'rgba(25,113,214,.10)' : 'rgba(247,103,7,.10)';
+  const hiRing = ()=> t<0 ? 'rgba(25,113,214,.35)' : 'rgba(247,103,7,.35)';
+
+  // ── 레이아웃(매 그리기마다 갱신) ───────────────────────
+  let W=0,H=0, cxL=0, cy=0, R=0, leftW=0, xA=0, xB=0, originX=0, lineY=0, lineUnit=0;
+  let vertical=false, splitY=0;     // 좁은 화면이면 원(위)·수직선(아래) 세로 배치
+
+  const canvas = document.getElementById('board');
+  const ctx = canvas.getContext('2d');
+  const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+  const pretty = s => String(s).replace(/-/g,'−');   // 보기 좋은 마이너스
+  const num2 = x => (Math.abs(x)<5e-3?0:x).toFixed(2);
+
+  function gcd(a,b){return b? gcd(b,a%b): a;}
+  // π/12 의 정수배일 때만 분수 문자열 반환, 아니면 null
+  function piFraction(v){
+    const u = Math.PI/12, n = Math.round(v/u);
+    if(Math.abs(v - n*u) > 1e-6) return null;
+    if(n===0) return "0";
+    const sign = n<0 ? "−" : "";
+    let num = Math.abs(n), den = 12, g = gcd(num,den);
+    num/=g; den/=g;
+    const core = (num===1 ? "π" : num+"π");
+    return sign + (den===1 ? core : core+"/"+den);
+  }
+  function degStr(v){
+    const d = v*180/Math.PI, r = Math.round(d);
+    return pretty(Math.abs(d-r)<1e-6 ? r+"°" : d.toFixed(1)+"°");
+  }
+
+  function updateRange(){
+    maxT = (multiTurn?2:1)*TAU;     // 토글 시 최대 2바퀴(±4π)까지
+    minT = negative ? -maxT : 0;
+    t = clamp(t, minT, maxT);
+  }
+
+  function computeLayout(){
+    vertical = W < 640;
+    const range = maxT - minT;
+    if(!vertical){                          // 넓은 화면: 좌(원)·우(수직선)
+      leftW = W*0.42; cxL = leftW*0.52; cy = H*0.54;
+      xA = leftW + 36; xB = W - 28;
+      const avail = xB - xA;
+      R = Math.min(leftW*0.34, H*0.36, avail/TAU);
+      lineUnit = Math.min(R, avail/range);
+      const totalPx = range*lineUnit, startPx = (xA+xB)/2 - totalPx/2;
+      originX = startPx - minT*lineUnit; lineY = cy;
+    } else {                                // 좁은 화면: 위(원)·아래(수직선)
+      leftW = 0; cxL = W/2; cy = H*0.30; splitY = H*0.56;
+      xA = 24; xB = W - 24;
+      const avail = xB - xA;
+      R = Math.min(W*0.30, cy-26, splitY-cy-26, avail/TAU);
+      lineUnit = Math.min(R, avail/range);
+      const totalPx = range*lineUnit, startPx = (xA+xB)/2 - totalPx/2;
+      originX = startPx - minT*lineUnit; lineY = H*0.80;
+    }
+  }
+  const X = v => originX + v*lineUnit;       // 실수 v → 우측 화면 x
+
+  // ── 그리기 헬퍼 ───────────────────────────────────────
+  function arrow(x,y,dx,dy,s){               // (dx,dy) 단위방향
+    ctx.beginPath();
+    ctx.moveTo(x,y);
+    ctx.lineTo(x-dx*s-dy*s*0.5, y-dy*s+dx*s*0.5);
+    ctx.lineTo(x-dx*s+dy*s*0.5, y-dy*s-dx*s*0.5);
+    ctx.closePath(); ctx.fill();
+  }
+  function text(s,x,y,{size=13,col=INK,align='center',base='middle',weight='normal'}={}){
+    ctx.fillStyle=col; ctx.textAlign=align; ctx.textBaseline=base;
+    ctx.font=`${weight} ${size}px "Pretendard","Segoe UI",system-ui,sans-serif`;
+    ctx.fillText(s,x,y);
+  }
+
+  function drawLeft(){
+    // 축 (원 둘레에 맞춰)
+    const axR = R + 22;
+    ctx.strokeStyle=AXIS; ctx.fillStyle=AXIS; ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.moveTo(cxL-axR,cy); ctx.lineTo(cxL+axR,cy); ctx.stroke();
+    arrow(cxL+axR,cy,1,0,7);
+    ctx.beginPath(); ctx.moveTo(cxL,cy+axR); ctx.lineTo(cxL,cy-axR); ctx.stroke();
+    arrow(cxL,cy-axR,0,-1,7);
+    // 단위 눈금 ±1
+    ctx.strokeStyle=GRID;
+    [[1,0],[-1,0],[0,1],[0,-1]].forEach(([sx,sy])=>{
+      const x=cxL+sx*R, y=cy-sy*R;
+      ctx.beginPath();
+      if(sy===0){ctx.moveTo(x,cy-4);ctx.lineTo(x,cy+4);} else {ctx.moveTo(cxL-4,y);ctx.lineTo(cxL+4,y);}
+      ctx.stroke();
+    });
+    text("1", cxL+R, cy+14, {col:MUTED,size:12});
+    text("−1", cxL-R, cy+14, {col:MUTED,size:12});
+
+    // 원 (r = 1)
+    ctx.strokeStyle=CIRC; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(cxL,cy,R,0,TAU); ctx.stroke();
+
+    const Px = cxL+R*Math.cos(t), Py = cy-R*Math.sin(t);
+
+    // 부채꼴(각 영역) — 옅은 음영
+    ctx.fillStyle=hiSoft();
+    ctx.beginPath(); ctx.moveTo(cxL,cy);
+    sampleArc((x,y)=>ctx.lineTo(x,y));
+    ctx.closePath(); ctx.fill();
+
+    // 호(강조)
+    ctx.strokeStyle=hi(); ctx.lineWidth=5; ctx.lineCap='round';
+    ctx.beginPath(); let first=true;
+    sampleArc((x,y)=>{ first?ctx.moveTo(x,y):ctx.lineTo(x,y); first=false; });
+    ctx.stroke(); ctx.lineCap='butt';
+
+    // 반지름 OP
+    ctx.strokeStyle=RAD; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(cxL,cy); ctx.lineTo(Px,Py); ctx.stroke();
+
+    // 시작점 (1,0)
+    ctx.fillStyle=MUTED; ctx.beginPath(); ctx.arc(cxL+R,cy,3,0,TAU); ctx.fill();
+
+    // 육십분법: 중심각 기호(작은 호) + 각도 라벨
+    {
+      const aMax=clamp(t,-TAU,TAU), ar=R*0.22;
+      ctx.strokeStyle=GRAY; ctx.lineWidth=1.8; ctx.beginPath();
+      const steps=Math.max(2,Math.ceil(Math.abs(aMax)/0.03));
+      for(let i=0;i<=steps;i++){ const phi=aMax*i/steps, x=cxL+ar*Math.cos(phi), y=cy-ar*Math.sin(phi); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }
+      ctx.stroke();
+      const la=aMax/2, lr=R*0.42;
+      text(degStr(t), cxL+lr*Math.cos(la), cy-lr*Math.sin(la), {col:GRAY,size:13,weight:'700'});
+    }
+
+    // 초기 강조: 호의 길이 = 반지름의 길이 (초기 화면에서만)
+    if(showIntro){
+      ctx.strokeStyle=POS; ctx.lineWidth=4; ctx.lineCap='round';
+      ctx.beginPath(); ctx.moveTo(cxL,cy); ctx.lineTo(cxL+R,cy); ctx.stroke(); ctx.lineCap='butt';
+      text("호의 길이 = 반지름의 길이", cxL, cy-R-16, {col:POS,weight:'700',size:14});
+    }
+
+    // 점 P (드래그 핸들)
+    ctx.fillStyle=hi(); ctx.beginPath(); ctx.arc(Px,Py,7,0,TAU); ctx.fill();
+    ctx.strokeStyle=hiRing(); ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(Px,Py,12,0,TAU); ctx.stroke();
+    text("P", Px + (Math.cos(t)>=0?14:-14), Py - 12, {col:hi(),weight:'700',size:14});
+
+    text("단위원  (r = 1)", cxL, cy+R+34, {col:MUTED,size:13});
+  }
+
+  // 호를 따라 점들을 샘플링하여 콜백 호출 (fill 여부에 따라 약간만 다름)
+  function sampleArc(cb){
+    const steps = Math.max(2, Math.ceil(Math.abs(t)/0.02));
+    for(let i=0;i<=steps;i++){
+      const phi = t*i/steps;
+      // 여러 바퀴일 때만 살짝 안쪽으로 감아 회전 수가 보이게(기본 모드는 정확히 R)
+      const rad = multiTurn ? R*(1-0.05*Math.min(2,Math.abs(phi)/TAU)) : R;
+      cb(cxL+rad*Math.cos(phi), cy-rad*Math.sin(phi));
+    }
+  }
+
+  function drawRight(){
+    const yL = lineY;
+    // 수직선
+    ctx.strokeStyle=LINE; ctx.fillStyle=LINE; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(X(minT),yL); ctx.lineTo(X(maxT),yL); ctx.stroke();
+    arrow(X(maxT),yL,1,0,8); arrow(X(minT),yL,-1,0,8);
+
+    // 정수 눈금 — '평범한 실수'임을 강조
+    ctx.strokeStyle=AXIS; ctx.lineWidth=1;
+    for(let k=Math.ceil(minT); k<=Math.floor(maxT); k++){
+      const x=X(k);
+      ctx.beginPath(); ctx.moveTo(x,yL-6); ctx.lineTo(x,yL+6); ctx.stroke();
+      if(k!==0) text(String(k), x, yL+18, {col:MUTED,size:12});
+    }
+    text("0", X(0), yL+18, {col:INK,size:12,weight:'700'});
+
+    // 펴진 만큼의 선분(강조, 좌측 호와 같은 색). 펴는 중엔 진행한 만큼만.
+    const sgn=Math.sign(t)||1, A=Math.abs(t);
+    const laid = anim.active ? sgn*anim.u*A : t;
+    ctx.strokeStyle=hi(); ctx.lineWidth=5; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(X(0),yL); ctx.lineTo(X(laid),yL); ctx.stroke(); ctx.lineCap='butt';
+
+    // 펴지는(굴러가는) 호의 곡선 부분
+    if(anim.active) drawUnroll(anim.u);
+
+    // 마커 + 값
+    const mx=X(laid);
+    ctx.fillStyle=hi(); ctx.beginPath(); ctx.arc(mx,yL,7,0,TAU); ctx.fill();
+    text(pretty(num2(laid)), mx, yL-30, {col:hi(),weight:'700',size:15});
+
+    text("실수직선  ( ℝ )", (xA+xB)/2, lineY+36, {col:MUTED,size:13});
+  }
+
+  // 호가 단위원에서 떨어져 나와 직선으로 펴지는(굴러가는) 모습
+  function drawUnroll(u){
+    const A=Math.abs(t); if(A<1e-6) return;
+    const sgn=Math.sign(t)||1, straight=u*A, rem=A-straight;
+    const steps=Math.max(6, Math.ceil(rem/0.03));
+    ctx.strokeStyle=hi(); ctx.lineWidth=4; ctx.lineCap='round';
+    ctx.beginPath();
+    for(let i=0;i<=steps;i++){
+      const tau=rem*i/steps, mx=straight+Math.sin(tau), my=1-Math.cos(tau);
+      const Xc=originX+sgn*mx*lineUnit, Yc=lineY-my*lineUnit;
+      i===0?ctx.moveTo(Xc,Yc):ctx.lineTo(Xc,Yc);
+    }
+    ctx.stroke(); ctx.lineCap='butt';
+    // 굴러가는 호의 자유단(끝점)
+    const hx=originX+sgn*(straight+Math.sin(rem))*lineUnit, hy=lineY-(1-Math.cos(rem))*lineUnit;
+    ctx.fillStyle=hi(); ctx.beginPath(); ctx.arc(hx,hy,5,0,TAU); ctx.fill();
+    text("호가 직선으로 펴지는 중…", (xA+xB)/2, lineY-lineUnit-14, {col:MUTED,size:13});
+  }
+
+  function draw(){
+    computeLayout();
+    ctx.clearRect(0,0,W,H);
+    text("각(도형)  ↦  실수(수직선 위의 점)", W/2, 16, {col:MUTED,size:13});
+    // 두 영역 구분선 (가로 배치=세로선 / 세로 배치=가로선)
+    ctx.strokeStyle=GRID; ctx.lineWidth=1; ctx.setLineDash([4,5]); ctx.beginPath();
+    if(vertical){ ctx.moveTo(20,splitY); ctx.lineTo(W-20,splitY); }
+    else { ctx.moveTo(leftW,28); ctx.lineTo(leftW,H-22); }
+    ctx.stroke(); ctx.setLineDash([]);
+    drawLeft();
+    drawRight();
+  }
+
+  function updateReadout(){
+    document.getElementById('vDeg').textContent = degStr(t);
+    document.getElementById('vArc').textContent = "≈ "+pretty(num2(Math.abs(t)));
+  }
+
+  function render(){ draw(); updateReadout(); }
+
+  // ── 펴기 애니메이션 ───────────────────────────────────
+  const ease = e => e<0.5 ? 2*e*e : 1-Math.pow(-2*e+2,2)/2;
+  function startUnroll(){                 // 펴기 시작(시작했으면 true)
+    if(Math.abs(t)<1e-6){ anim.active=false; return false; }
+    anim.active=true; anim.start=performance.now(); anim.u=0;
+    requestAnimationFrame(tick); return true;
+  }
+  function tick(now){
+    if(!anim.active) return;              // 드래그 등으로 취소됨
+    const e=(now-anim.start)/anim.dur;
+    if(e>=1){ anim.active=false; anim.u=1; render(); return; }
+    anim.u=ease(e); draw(); requestAnimationFrame(tick);
+  }
+  function placeValue(){                   // 점을 '찍는' 순간: 값 갱신 + 자연스럽게 펴기
+    updateReadout();
+    if(!startUnroll()) draw();
+  }
+
+  // ── 입력 ──────────────────────────────────────────────
+  function localXY(e){
+    const r=canvas.getBoundingClientRect();
+    return [e.clientX-r.left, e.clientY-r.top];
+  }
+  function setFromAngle(a0){           // 클릭 위치의 각으로 점프(현재 t와 가장 가까운 동치값)
+    let c=a0;
+    while(c-t> Math.PI) c-=TAU;
+    while(t-c> Math.PI) c+=TAU;
+    t=clamp(c,minT,maxT);
+  }
+  canvas.addEventListener('pointerdown', e=>{
+    const [px,py]=localXY(e);
+    if(vertical ? py>=splitY : px>=leftW) return;   // 원이 있는 영역에서만 조작
+    dragging=true; canvas.setPointerCapture(e.pointerId);
+    prevRaw=Math.atan2(cy-py, px-cxL);
+    setFromAngle(prevRaw);
+    showIntro=false;                  // 사용자가 조작하면 초기 강조 해제
+    anim.active=false;                // 누르는 동안은 실시간 표시(펴기는 손을 뗄 때)
+    updateReadout(); draw();
+  });
+  canvas.addEventListener('pointermove', e=>{
+    if(!dragging) return;
+    anim.active=false;                // 드래그하면 펴기 취소 → 실시간 추적
+    const [px,py]=localXY(e);
+    const raw=Math.atan2(cy-py, px-cxL);
+    let d=raw-prevRaw;
+    if(d>Math.PI) d-=TAU; else if(d<-Math.PI) d+=TAU;   // 연속 추적(바퀴 감김)
+    t=clamp(t+d,minT,maxT); prevRaw=raw; render();
+  });
+  canvas.addEventListener('pointerup', ()=>{
+    if(!dragging) return;
+    dragging=false;
+    placeValue();                     // 손을 떼는 순간 호가 펴짐
+  });
+  canvas.addEventListener('pointercancel', ()=>{ dragging=false; });
+
+  // 특수각 버튼
+  const ANGLES=[0,30,45,60,90,120,135,150,180,210,225,240,270,300,315,330,360];
+  const box=document.getElementById('angleBtns');
+  ANGLES.forEach(d=>{
+    const b=document.createElement('button'); b.className='angle'; b.textContent=d+'°';
+    b.onclick=()=>{ showIntro=false; t=clamp(d*Math.PI/180,minT,maxT); placeValue(); };
+    box.appendChild(b);
+  });
+
+  document.getElementById('mt').onchange  = e=>{ showIntro=false; multiTurn=e.target.checked; updateRange(); render(); };
+  document.getElementById('neg').onchange = e=>{ showIntro=false; negative=e.target.checked; updateRange(); render(); };
+  document.getElementById('resetBtn').onclick  = ()=>{
+    t=INIT_T; multiTurn=false; negative=false; showIntro=true;
+    document.getElementById('mt').checked=false;
+    document.getElementById('neg').checked=false;
+    updateRange(); render();
+  };
+
+  // ── 크기/초기화 ───────────────────────────────────────
+  function resize(){
+    const cssW=canvas.clientWidth || canvas.parentElement.clientWidth;
+    const cssH = cssW<640 ? Math.round(Math.min(680, Math.max(460, cssW*1.2)))   // 세로 배치는 더 높게
+                          : Math.round(Math.max(360, Math.min(520, cssW*0.42)));
+    canvas.style.height=cssH+'px';
+    const dpr=window.devicePixelRatio||1;
+    canvas.width=Math.round(cssW*dpr); canvas.height=Math.round(cssH*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    W=cssW; H=cssH; render();
+  }
+  window.addEventListener('resize', resize);
+  updateRange(); resize();
+})();
+
+/* ───────────────── 탐구 섹션 (동심원) ───────────────── */
+(function(){
+  "use strict";
+  const TAU=Math.PI*2;
+  const POS='#f76707', TEAL='#0ca678';                 // 안쪽=주황, 바깥=청록
+  const CIRC='#6c757d', RAD='#adb5bd', GRAY='#868e96';
+  const AXIS='#adb5bd', GRID='#e9ecef', LINE='#343a40', MUTED='#868e96', INK='#212529';
+
+  const canvas=document.getElementById('board2');
+  if(!canvas) return;
+  const ctx=canvas.getContext('2d');
+
+  let theta=1.0;            // 공유 중심각 [0, 2π]
+  let R2=2.0;               // 바깥 원 반지름
+  let norm=0, normTarget=0; // 정규화(÷r) 진행도 0(ℓ)→1(ℓ/r)
+  let normAnim=null;
+  let dragging=false, prevRaw=0;
+
+  let W=0,H=0, cxL=0, cy=0, R1=0, leftW=0, ox=0, xB=0, lineUnit=0, yTop=0, yBot=0;
+  let vertical2=false, splitY=0;     // 좁은 화면 세로 배치
+
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const num1=x=>x.toFixed(1);
+  const num2=x=>(Math.abs(x)<5e-3?0:x).toFixed(2);
+  const degStr=()=>{ const d=theta*180/Math.PI, r=Math.round(d); return (Math.abs(d-r)<1e-6?r:d.toFixed(1))+"°"; };
+  const segLen=r=> theta*((1-norm)*r + norm);   // 화면에 보일 길이: ℓ → ℓ/r 로 보간
+
+  function text(s,x,y,{size=13,col=INK,align='center',base='middle',weight='normal'}={}){
+    ctx.fillStyle=col; ctx.textAlign=align; ctx.textBaseline=base;
+    ctx.font=`${weight} ${size}px "Pretendard","Segoe UI",system-ui,sans-serif`;
+    ctx.fillText(s,x,y);
+  }
+  function arrow(x,y,dx,dy,s){ ctx.beginPath(); ctx.moveTo(x,y);
+    ctx.lineTo(x-dx*s-dy*s*0.5,y-dy*s+dx*s*0.5); ctx.lineTo(x-dx*s+dy*s*0.5,y-dy*s-dx*s*0.5);
+    ctx.closePath(); ctx.fill(); }
+  function arcPath(radius,cb){ const steps=Math.max(2,Math.ceil(theta/0.02));
+    for(let i=0;i<=steps;i++){ const p=theta*i/steps; cb(cxL+radius*Math.cos(p), cy-radius*Math.sin(p)); } }
+
+  function layout(){
+    vertical2 = W < 640;
+    const RMAX=3;
+    if(!vertical2){                // 넓은 화면: 좌(원)·우(수직선)
+      leftW=W*0.42; cxL=leftW*0.5; cy=H*0.54;
+      const maxRad=Math.min(leftW*0.42, H*0.42);
+      R1=maxRad/RMAX;              // 안쪽 원(r=1)은 고정, 바깥 원은 R2 에 따라 커짐
+      ox=leftW+48; xB=W-28;
+      lineUnit=(xB-ox)/(RMAX*TAU); // r 커지면 바깥 호 막대가 길어짐
+      yTop=cy-46; yBot=cy+46;
+    } else {                       // 좁은 화면: 위(원)·아래(두 수직선)
+      leftW=0; cxL=W/2; cy=H*0.27; splitY=H*0.54;
+      const maxRad=Math.min(W*0.40, cy-22, splitY-cy-18);
+      R1=maxRad/RMAX;
+      ox=24; xB=W-24;
+      lineUnit=(xB-ox)/(RMAX*TAU);
+      yTop=H*0.66; yBot=H*0.84;
+    }
+  }
+
+  function drawCircles(){
+    const Ro=R2*R1;
+    // 축
+    ctx.strokeStyle=AXIS; ctx.fillStyle=AXIS; ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.moveTo(cxL-Ro-12,cy); ctx.lineTo(cxL+Ro+12,cy); ctx.stroke(); arrow(cxL+Ro+12,cy,1,0,7);
+    ctx.beginPath(); ctx.moveTo(cxL,cy+Ro+12); ctx.lineTo(cxL,cy-Ro-12); ctx.stroke(); arrow(cxL,cy-Ro-12,0,-1,7);
+    // 원 2개
+    ctx.strokeStyle=CIRC; ctx.lineWidth=1.6;
+    ctx.beginPath(); ctx.arc(cxL,cy,R1,0,TAU); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cxL,cy,Ro,0,TAU); ctx.stroke();
+    // 공유 각 부채꼴(옅은 회색)
+    ctx.fillStyle='rgba(108,117,125,.10)';
+    ctx.beginPath(); ctx.moveTo(cxL,cy); arcPath(Ro,(x,y)=>ctx.lineTo(x,y)); ctx.closePath(); ctx.fill();
+    // 공유 반지름(바깥 점까지)
+    const Ox=cxL+Ro*Math.cos(theta), Oy=cy-Ro*Math.sin(theta);
+    ctx.strokeStyle=RAD; ctx.lineWidth=1.4; ctx.beginPath(); ctx.moveTo(cxL,cy); ctx.lineTo(Ox,Oy); ctx.stroke();
+    // 호 2개
+    ctx.lineCap='round';
+    ctx.strokeStyle=POS; ctx.lineWidth=5; ctx.beginPath(); let f1=true; arcPath(R1,(x,y)=>{ f1?ctx.moveTo(x,y):ctx.lineTo(x,y); f1=false; }); ctx.stroke();
+    ctx.strokeStyle=TEAL; ctx.lineWidth=5; ctx.beginPath(); let f2=true; arcPath(Ro,(x,y)=>{ f2?ctx.moveTo(x,y):ctx.lineTo(x,y); f2=false; }); ctx.stroke();
+    ctx.lineCap='butt';
+    // 점
+    const ix=cxL+R1*Math.cos(theta), iy=cy-R1*Math.sin(theta);
+    ctx.fillStyle=POS;  ctx.beginPath(); ctx.arc(ix,iy,5,0,TAU); ctx.fill();
+    ctx.fillStyle=TEAL; ctx.beginPath(); ctx.arc(Ox,Oy,7,0,TAU); ctx.fill();
+    ctx.strokeStyle='rgba(12,166,120,.35)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(Ox,Oy,12,0,TAU); ctx.stroke();
+    // 중심각 기호 + 각도(회색)
+    const ar=Math.min(R1*0.5, 26);
+    ctx.strokeStyle=GRAY; ctx.lineWidth=1.6; ctx.beginPath(); let f3=true;
+    const st=Math.max(2,Math.ceil(theta/0.03));
+    for(let i=0;i<=st;i++){ const p=theta*i/st, x=cxL+ar*Math.cos(p), y=cy-ar*Math.sin(p); f3?ctx.moveTo(x,y):ctx.lineTo(x,y); f3=false; }
+    ctx.stroke();
+    text(degStr(), cxL+(ar+18)*Math.cos(theta/2), cy-(ar+18)*Math.sin(theta/2), {col:GRAY,size:12,weight:'700'});
+    // 캡션
+    const capY = vertical2 ? cy + Ro + 20 : H - 6;
+    text("안쪽 r = 1", cxL, capY, {col:POS, size:13, align:'right'});
+    text("   ·   바깥 r = "+num1(R2), cxL, capY, {col:TEAL, size:13, align:'left'});
+  }
+
+  function drawOneLine(y, r, color, label){
+    ctx.strokeStyle=LINE; ctx.fillStyle=LINE; ctx.lineWidth=1.6;
+    ctx.beginPath(); ctx.moveTo(ox,y); ctx.lineTo(xB,y); ctx.stroke(); arrow(xB,y,1,0,7);
+    ctx.strokeStyle=AXIS; ctx.lineWidth=1;
+    const maxv=(xB-ox)/lineUnit;
+    for(let k=0;k<=Math.floor(maxv);k++){ const x=ox+k*lineUnit; ctx.beginPath(); ctx.moveTo(x,y-4); ctx.lineTo(x,y+4); ctx.stroke(); }
+    const L=segLen(r), xe=ox+L*lineUnit;
+    ctx.strokeStyle=color; ctx.lineWidth=6; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(ox,y); ctx.lineTo(xe,y); ctx.stroke(); ctx.lineCap='butt';
+    ctx.fillStyle=color; ctx.beginPath(); ctx.arc(xe,y,5,0,TAU); ctx.fill();
+    text(num2(L), xe, y-15, {col:color, size:14, weight:'700'});
+    text(label, ox, y-15, {col:MUTED, size:12, align:'left'});
+  }
+
+  function drawLines(){
+    const on = normTarget>0.5;     // ÷반지름 상태면 바깥 호만 'ℓ ÷ 반지름'으로 (안쪽은 그대로)
+    drawOneLine(yTop, 1,  POS,  "안쪽 호의 길이 ℓ₁");
+    drawOneLine(yBot, R2, TEAL, on ? "바깥 호 ÷ 반지름  ( ℓ₂ ÷ "+num1(R2)+" )" : "바깥 호의 길이 ℓ₂");
+    if(norm>0.97){                 // 정규화되면 둘 다 θ 로 같아짐 표시
+      const xe=ox+theta*lineUnit;
+      ctx.strokeStyle=GRAY; ctx.lineWidth=1; ctx.setLineDash([3,4]);
+      ctx.beginPath(); ctx.moveTo(xe,yTop-10); ctx.lineTo(xe,yBot+10); ctx.stroke(); ctx.setLineDash([]);
+      text("두 값이 같다  ( = θ )", xe+10, (yTop+yBot)/2, {col:INK,size:13,weight:'700',align:'left'});
+    }
+  }
+
+  function draw(){
+    layout();
+    ctx.clearRect(0,0,W,H);
+    text("같은 각 ↦ 두 원의 호의 길이 비교", W/2, 16, {col:MUTED, size:13});
+    ctx.strokeStyle=GRID; ctx.lineWidth=1; ctx.setLineDash([4,5]); ctx.beginPath();
+    if(vertical2){ ctx.moveTo(20,splitY); ctx.lineTo(W-20,splitY); }
+    else { ctx.moveTo(leftW,28); ctx.lineTo(leftW,H-22); }
+    ctx.stroke(); ctx.setLineDash([]);
+    drawCircles();
+    drawLines();
+  }
+
+  function updateReadout(){
+    const on=normTarget>0.5;
+    document.getElementById('q_deg').textContent=degStr();
+    document.getElementById('q_l1').textContent="≈ "+num2(theta);                      // 안쪽: 항상 호의 길이(=θ)
+    document.getElementById('q_l2lab').textContent = on ? "바깥 원 호의 길이 ÷ 반지름"
+                                                        : ("바깥 원(r = "+num1(R2)+") 호의 길이 ℓ₂");
+    document.getElementById('q_l2').textContent="≈ "+num2(segLen(R2));                  // 바깥: ℓ₂ → ℓ₂/r 로 함께 변함
+    document.getElementById('q_rval').textContent=num1(R2);
+    document.getElementById('t_r').textContent=num1(R2);
+    document.getElementById('t_l1').textContent=num2(theta);
+    document.getElementById('t_l2').textContent=num2(R2*theta);
+  }
+  function render(){ draw(); updateReadout(); }
+
+  // 정규화 애니메이션
+  function animateNorm(){
+    if(normAnim) cancelAnimationFrame(normAnim);
+    const step=()=>{
+      norm += (normTarget-norm)*0.2;
+      if(Math.abs(normTarget-norm)<0.003){ norm=normTarget; render(); normAnim=null; return; }
+      render(); normAnim=requestAnimationFrame(step);
+    };
+    step();
+  }
+
+  // 입력
+  function localXY(e){ const r=canvas.getBoundingClientRect(); return [e.clientX-r.left, e.clientY-r.top]; }
+  function setFromAngle(a0){ if(a0<0) a0+=TAU; theta=clamp(a0,0,TAU); }
+  canvas.addEventListener('pointerdown', e=>{
+    const [px,py]=localXY(e); if(vertical2 ? py>=splitY : px>=leftW) return;
+    dragging=true; canvas.setPointerCapture(e.pointerId);
+    prevRaw=Math.atan2(cy-py, px-cxL); setFromAngle(prevRaw); render();
+  });
+  canvas.addEventListener('pointermove', e=>{
+    if(!dragging) return;
+    const [px,py]=localXY(e); const raw=Math.atan2(cy-py, px-cxL);
+    let d=raw-prevRaw; if(d>Math.PI) d-=TAU; else if(d<-Math.PI) d+=TAU;
+    theta=clamp(theta+d,0,TAU); prevRaw=raw; render();
+  });
+  canvas.addEventListener('pointerup', ()=>{ dragging=false; });
+  canvas.addEventListener('pointercancel', ()=>{ dragging=false; });
+
+  document.getElementById('q_radius').oninput = e=>{ R2=parseFloat(e.target.value); render(); };
+  document.getElementById('q_norm').onclick = ()=>{
+    normTarget = normTarget ? 0 : 1; animateNorm();
+    if(normTarget===1) document.getElementById('q_def').classList.remove('hidden');
+  };
+  document.getElementById('q_reset').onclick = ()=>{
+    theta=1.0; R2=2.0; norm=0; normTarget=0;
+    document.getElementById('q_radius').value=2;
+    document.getElementById('q_def').classList.add('hidden');
+    render();
+  };
+
+  function resize(){
+    const cssW=canvas.clientWidth || canvas.parentElement.clientWidth;
+    const cssH = cssW<640 ? Math.round(Math.min(680, Math.max(460, cssW*1.2)))   // 세로 배치는 더 높게
+                          : Math.round(Math.max(360, Math.min(520, cssW*0.42)));
+    canvas.style.height=cssH+'px';
+    const dpr=window.devicePixelRatio||1;
+    canvas.width=Math.round(cssW*dpr); canvas.height=Math.round(cssH*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    W=cssW; H=cssH; render();
+  }
+  window.addEventListener('resize', resize);
+  resize();
+})();
+</script>
+</body>
+</html>

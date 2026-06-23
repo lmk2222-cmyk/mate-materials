@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>수열 점화식 추론 연습</title>
+<style>
+  :root{
+    --ink:#212529; --muted:#868e96; --card:#f8f9fa; --border:#dee2e6;
+    --accent:#1971c2; --accent-soft:rgba(25,113,214,.10);
+    --ok:#2f9e44; --ok-soft:rgba(47,158,68,.14);
+    --no:#e03131; --no-soft:rgba(224,49,49,.10);
+    --seed:#f76707; --seed-soft:rgba(247,103,7,.14);
+  }
+  *{box-sizing:border-box}
+  body{margin:0; padding:22px 18px 48px; color:var(--ink); line-height:1.55;
+    font-family:"Pretendard","Segoe UI",system-ui,-apple-system,sans-serif; background:#fff}
+  .wrap{max-width:1080px; margin:0 auto}
+  h1{font-size:23px; margin:0 0 4px}
+  .sub{margin:0 0 16px; color:var(--muted); font-size:15px}
+
+  /* 단계 탭 */
+  .tabs{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px}
+  .tab{padding:8px 14px; border:1px solid var(--border); background:#fff; border-radius:10px;
+    cursor:pointer; font-size:14px; text-align:left}
+  .tab b{display:block; font-size:13px}
+  .tab small{color:var(--muted); font-size:12px}
+  .tab.active{border-color:var(--accent); background:var(--accent-soft)}
+
+  .info{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px 16px; margin-bottom:18px}
+  .info .desc{font-size:14px; margin:0 0 8px}
+  .rules{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+  .rule{font-family:"Cascadia Code",Consolas,monospace; font-size:14px; background:#fff;
+    border:1px solid var(--border); border-radius:8px; padding:5px 10px}
+  .seedtag{font-size:13px; color:var(--seed); font-weight:700}
+
+  section.view{border:1px solid var(--border); border-radius:12px; padding:14px 16px; margin-bottom:16px}
+  section.view > h2{font-size:16px; margin:0 0 4px}
+  section.view > .hint{font-size:13px; color:var(--muted); margin:0 0 12px}
+
+  /* ① 계산표 */
+  .grid{display:grid; grid-template-columns:repeat(8,1fr); gap:8px}
+  .cell{border:1px solid var(--border); border-radius:8px; padding:6px 4px; text-align:center; background:#fff}
+  .cell .idx{font-size:12px; color:var(--muted)}
+  .cell input{width:100%; border:none; text-align:center; font-size:16px; font-weight:700;
+    outline:none; background:transparent; color:var(--ink); -moz-appearance:textfield}
+  .cell input::-webkit-outer-spin-button,.cell input::-webkit-inner-spin-button{-webkit-appearance:none}
+  .cell.seed{background:var(--seed-soft); border-color:var(--seed)}
+  .cell.seed .val{font-size:16px; font-weight:700; color:var(--seed)}
+  .cell.ok{background:var(--ok-soft); border-color:var(--ok)}
+  .cell.no{background:var(--no-soft); border-color:var(--no)}
+  .cell.focus{box-shadow:0 0 0 2px var(--accent-soft); border-color:var(--accent)}
+  .toolbar{display:flex; gap:8px; align-items:center; margin:12px 0 0; flex-wrap:wrap}
+  .status{font-family:"Cascadia Code",Consolas,monospace; font-size:14px; color:var(--accent); min-height:20px}
+
+  button.btn{padding:7px 13px; border:1px solid var(--border); background:#fff; border-radius:9px; cursor:pointer; font-size:14px}
+  button.btn:hover{background:var(--card)}
+  button.btn.go{background:var(--accent); color:#fff; border:none}
+  input.num{width:96px; padding:9px 10px; border:1px solid var(--border); border-radius:9px; font-size:16px}
+  .field{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:8px}
+  .field label{font-size:14px; color:var(--muted)}
+
+  .out{font-size:15px; line-height:1.9}
+  .out .mono{font-family:"Cascadia Code",Consolas,monospace}
+  .out ul{margin:8px 0; padding-left:20px}
+  .out .total{font-size:17px}
+  .out .klist{font-family:"Cascadia Code",Consolas,monospace; background:var(--card);
+    border:1px solid var(--border); border-radius:8px; padding:8px 10px; word-break:break-all}
+  .out .fbuild{font-size:13px; color:var(--muted); font-family:"Cascadia Code",Consolas,monospace}
+  .chain{font-family:"Cascadia Code",Consolas,monospace; font-size:15px; line-height:2}
+  .chain .res{font-size:17px; font-weight:700; color:var(--accent)}
+  .usage{font-size:13px; color:var(--muted); margin:6px 0 18px}
+  .usage b{color:var(--ink)}
+  /* 모바일/터치 */
+  @media (max-width:620px){
+    .grid{grid-template-columns:repeat(6,1fr)}
+    button.btn{padding:10px 14px}
+    .tab{padding:10px 14px}
+    .cell input{font-size:16px}
+  }
+  @media (max-width:430px){
+    .grid{grid-template-columns:repeat(4,1fr)}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>수열 점화식 추론 연습</h1>
+  <p class="sub">규칙을 읽고 → 항을 계산하고 → 구조를 파악하고 → 거꾸로 세어 본다.</p>
+  <p class="usage"><b>① 항 계산표</b>: 빈칸을 직접 채우며 규칙 적용을 연습 · <b>② 환원 보기</b>: 큰 항이 어떻게 작은 항으로 줄어드는지 · <b>③ 거꾸로 찾기</b>: a(k)=값 이 되는 k의 개수를 빠짐없이 세기</p>
+
+  <div class="tabs" id="tabs"></div>
+
+  <div class="info">
+    <p class="desc" id="lvDesc"></p>
+    <div class="rules" id="lvRules"></div>
+  </div>
+
+  <section class="view">
+    <h2>① 항 계산표 — 직접 채워보기</h2>
+    <p class="hint">빈칸에 값을 입력하면 바로 채점됩니다. 칸을 클릭하면 어떤 규칙을 쓰는지 아래에 보여줍니다. (주황 = 주어진 시작값)</p>
+    <div class="grid" id="grid"></div>
+    <div class="status" id="status">&nbsp;</div>
+    <div class="toolbar">
+      <button class="btn" id="btnHint">힌트(규칙) 보기</button>
+      <button class="btn" id="btnClear">지우기</button>
+    </div>
+  </section>
+
+  <section class="view">
+    <h2>② 환원 보기 — "이 항은 어디서 왔나"</h2>
+    <p class="hint">항 번호를 넣으면, 규칙을 따라 시작값까지 어떻게 줄어드는지 보여줍니다.</p>
+    <div class="field">
+      <label>항 번호 k =</label>
+      <input class="num" id="redK" type="number" min="1">
+      <button class="btn go" id="btnRed">환원하기</button>
+    </div>
+    <div class="out chain" id="redOut"></div>
+  </section>
+
+  <section class="view">
+    <h2>③ 거꾸로 찾기 — a(k) = 값 의 개수 세기</h2>
+    <p class="hint">목표 값을 넣으면, 규칙을 거꾸로 적용해 그 값이 되는 모든 k를 찾고 개수를 셉니다.</p>
+    <div class="field">
+      <label>목표 값 =</label>
+      <input class="num" id="cntV" type="number" min="1">
+      <button class="btn go" id="btnCnt">개수 세기</button>
+    </div>
+    <div class="out" id="cntOut"></div>
+  </section>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ── 단계(사다리) 정의 ─────────────────────────────────
+  // reduce(k): 시작값이면 null, 아니면 {n: 더 작은 항, add: 더한 값}
+  // branches: 거꾸로 셀 때 가지. {add, maps:[m→k 인덱스 변환들]}
+  const LEVELS = [
+    { name:"Lv0", title:"몸풀기: 절반으로",
+      desc:"규칙은 사실상 하나 — 인덱스를 절반으로 줄이며 +1. (모든 항이 정해집니다)",
+      rules:["a(2n) = a(n) + 1","a(2n+1) = a(n) + 1"], seeds:{1:1}, target:3,
+      reduce:k=> k===1? null : {n:Math.floor(k/2), add:1},
+      branches:[{add:1, maps:[m=>2*m, m=>2*m+1]}] },
+
+    { name:"Lv1", title:"짝·홀 두 규칙",
+      desc:"짝수는 +1, 홀수는 +2. 인덱스의 2진법 구조가 값에 반영됩니다.",
+      rules:["a(2n) = a(n) + 1","a(2n+1) = a(n) + 2"], seeds:{1:1}, target:5,
+      reduce:k=> k===1? null : (k%2===0? {n:k/2,add:1} : {n:(k-1)/2,add:2}),
+      branches:[{add:1,maps:[m=>2*m]},{add:2,maps:[m=>2*m+1]}] },
+
+    { name:"Lv2", title:"개수 세기 연습",
+      desc:"Lv1과 같은 수열. 이번엔 ③에서 거꾸로 추적해 'a(k)=값'이 되는 k의 개수를 빠짐없이 세어 봅니다.",
+      rules:["a(2n) = a(n) + 1","a(2n+1) = a(n) + 2"], seeds:{1:1}, target:6,
+      reduce:k=> k===1? null : (k%2===0? {n:k/2,add:1} : {n:(k-1)/2,add:2}),
+      branches:[{add:1,maps:[m=>2*m]},{add:2,maps:[m=>2*m+1]}] },
+
+    { name:"Lv3", title:"4로 나눈 나머지 구조 (순한 맛)",
+      desc:"홀수를 4n+1·4n+3 두 꼴로 나눕니다. 두 꼴은 값이 같아요(이웃 홀수항이 같음). 시작값이 둘(a1, a3).",
+      rules:["a(2n) = a(n) + 1","a(4n+1) = a(4n+3) = a(n) + 2"], seeds:{1:1,3:2}, target:6,
+      reduce:k=>{ if(k===1||k===3) return null; if(k%2===0) return {n:k/2,add:1};
+                  return (k%4===1)? {n:(k-1)/4,add:2} : {n:(k-3)/4,add:2}; },
+      branches:[{add:1,maps:[m=>2*m]},{add:2,maps:[m=>4*m+1,m=>4*m+3]}] },
+
+    { name:"Lv4", title:"원문제 (수능 22번형)",
+      desc:"a1=1, a3=4. 짝수는 +1, 홀수(4n+1·4n+3)는 +4. 목표: a(k)=10 인 k의 개수를 구하라.",
+      rules:["a(2n) = a(n) + 1","a(4n+1) = a(4n+3) = a(n) + 4"], seeds:{1:1,3:4}, target:10,
+      reduce:k=>{ if(k===1||k===3) return null; if(k%2===0) return {n:k/2,add:1};
+                  return (k%4===1)? {n:(k-1)/4,add:4} : {n:(k-3)/4,add:4}; },
+      branches:[{add:1,maps:[m=>2*m]},{add:4,maps:[m=>4*m+1,m=>4*m+3]}] }
+  ];
+  const N = 24;            // 계산표에 보일 항 개수
+  let cur = 0;
+  let memoC = {}, memoE = {};
+  const L = ()=>LEVELS[cur];
+
+  function resetMemo(){ memoC = {}; memoE = {}; }
+  function compute(k){
+    const lv=L();
+    if(lv.seeds[k]!==undefined) return lv.seeds[k];
+    if(memoC[k]!==undefined) return memoC[k];
+    const r=lv.reduce(k);
+    const v=compute(r.n)+r.add;
+    return (memoC[k]=v);
+  }
+  // 값 v 가 되는 모든 k (오름차순)
+  function enumerate(v){
+    if(v<=0) return [];
+    if(memoE[v]) return memoE[v];
+    const lv=L(); let res=[];
+    for(const idx in lv.seeds) if(lv.seeds[idx]===v) res.push(+idx);
+    for(const b of lv.branches){
+      const child=enumerate(v-b.add);
+      for(const m of child) for(const f of b.maps) res.push(f(m));
+    }
+    res=[...new Set(res)].sort((a,b)=>a-b);
+    return (memoE[v]=res);
+  }
+  const fcount = v => enumerate(v).length;
+  const ruleText = k =>{
+    const lv=L();
+    if(lv.seeds[k]!==undefined) return `a(${k}) = ${lv.seeds[k]}   (주어진 시작값)`;
+    const r=lv.reduce(k);
+    return `a(${k}) = a(${r.n}) + ${r.add}`;
+  };
+
+  // ── 탭 ────────────────────────────────────────────────
+  const tabsEl=document.getElementById('tabs');
+  LEVELS.forEach((lv,i)=>{
+    const b=document.createElement('button'); b.className='tab';
+    b.innerHTML=`<b>${lv.name}</b><small>${lv.title}</small>`;
+    b.onclick=()=>{ cur=i; renderAll(); };
+    tabsEl.appendChild(b);
+  });
+
+  // ── 렌더 ──────────────────────────────────────────────
+  const $=id=>document.getElementById(id);
+  function renderInfo(){
+    [...tabsEl.children].forEach((b,i)=>b.classList.toggle('active',i===cur));
+    $('lvDesc').textContent=L().desc;
+    const seedTxt=Object.entries(L().seeds).map(([i,v])=>`a${i}=${v}`).join(', ');
+    $('lvRules').innerHTML =
+      `<span class="seedtag">시작값: ${seedTxt}</span>` +
+      L().rules.map(r=>`<span class="rule">${r}</span>`).join('');
+  }
+
+  let showHint=false;
+  function buildTable(){
+    const g=$('grid'); g.innerHTML=''; const lv=L();
+    for(let k=1;k<=N;k++){
+      const cell=document.createElement('div'); cell.className='cell'; cell.dataset.k=k;
+      const idx=document.createElement('div'); idx.className='idx'; idx.textContent='a('+k+')';
+      cell.appendChild(idx);
+      if(lv.seeds[k]!==undefined){
+        cell.classList.add('seed');
+        const v=document.createElement('div'); v.className='val'; v.textContent=lv.seeds[k];
+        cell.appendChild(v);
+      } else {
+        const inp=document.createElement('input'); inp.type='number'; inp.dataset.k=k;
+        inp.addEventListener('input',()=>checkCell(cell,inp));
+        inp.addEventListener('focus',()=>{ markFocus(cell); $('status').textContent=showHint?ruleText(k):'a('+k+') = ?'; });
+        inp.addEventListener('blur',()=>{ cell.classList.remove('focus'); });
+        cell.appendChild(inp);
+      }
+      g.appendChild(cell);
+    }
+  }
+  function markFocus(cell){ [...$('grid').children].forEach(c=>c.classList.remove('focus')); cell.classList.add('focus'); }
+  function checkCell(cell,inp){
+    cell.classList.remove('ok','no');
+    if(inp.value==='') return;
+    const k=+inp.dataset.k;
+    if(+inp.value===compute(k)) cell.classList.add('ok'); else cell.classList.add('no');
+  }
+
+  // ② 환원
+  function renderReduce(k){
+    const lv=L(); const out=$('redOut');
+    if(!Number.isInteger(k)||k<1){ out.textContent='1 이상의 정수를 입력하세요.'; return; }
+    const steps=[]; let cur2=k, guard=0;
+    while(lv.seeds[cur2]===undefined && guard++<999){ const r=lv.reduce(cur2); steps.push({k:cur2,n:r.n,add:r.add}); cur2=r.n; }
+    const seedVal=lv.seeds[cur2];
+    let html='';
+    steps.forEach(s=> html += `a(${s.k}) = a(${s.n}) + ${s.add}<br>`);
+    html += `a(${cur2}) = ${seedVal}  (시작값)<br>`;
+    const total=seedVal+steps.reduce((s,x)=>s+x.add,0);
+    const adds=steps.map(s=>s.add).reverse().join(' + ');
+    html += `<span class="res">⇒ a(${k}) = ${seedVal}${steps.length? ' + '+adds : ''} = ${total}</span>`;
+    out.innerHTML=html;
+  }
+
+  // ③ 거꾸로 세기
+  function renderCount(v){
+    const lv=L(); const out=$('cntOut');
+    if(!Number.isInteger(v)||v<1){ out.textContent='1 이상의 정수를 입력하세요.'; return; }
+    let html=`<p><b>a(k) = ${v}</b> 가 되는 경우를 거꾸로 따져봅니다:</p><ul>`;
+    for(const b of lv.branches){
+      const cv=v-b.add, c=fcount(cv), ways=b.maps.length;
+      html += `<li>값이 <b>${cv}</b>인 항 <b>${c}</b>개에서 +${b.add} → 각 항마다 ${ways}자리 ⇒ <b>${c*ways}</b>개</li>`;
+    }
+    const seedHits=Object.entries(lv.seeds).filter(([i,val])=>val===v).map(([i])=>i);
+    if(seedHits.length) html += `<li>시작값 중 ${v}인 것: a${seedHits.join(', a')} ⇒ ${seedHits.length}개</li>`;
+    html += `</ul>`;
+    const list=enumerate(v);
+    html += `<p class="total">합계 = <b>${list.length}</b> 개</p>`;
+    html += `<p class="klist">k = ${list.length? list.join(', ') : '(없음)'}</p>`;
+    const fb=[]; for(let i=1;i<=v;i++) fb.push(`f(${i})=${fcount(i)}`);
+    html += `<p class="fbuild">개수 누적  ${fb.join(',  ')}</p>`;
+    out.innerHTML=html;
+  }
+
+  function renderAll(){
+    resetMemo(); showHint=false; $('btnHint').textContent='힌트(규칙) 보기';
+    renderInfo(); buildTable(); $('status').innerHTML='&nbsp;';
+    $('redK').value = (cur>=3? 24 : 12);
+    $('cntV').value = L().target;
+    renderReduce(+$('redK').value);
+    renderCount(L().target);
+  }
+
+  // ── 버튼 ──────────────────────────────────────────────
+  $('btnHint').onclick=()=>{ showHint=!showHint; $('btnHint').textContent=showHint?'힌트 끄기':'힌트(규칙) 보기'; };
+  $('btnClear').onclick=()=>{ [...$('grid').querySelectorAll('input')].forEach(inp=>{ inp.value=''; inp.parentElement.classList.remove('ok','no'); }); };
+  $('btnRed').onclick=()=>renderReduce(parseInt($('redK').value,10));
+  $('btnCnt').onclick=()=>renderCount(parseInt($('cntV').value,10));
+  $('redK').addEventListener('keydown',e=>{ if(e.key==='Enter') renderReduce(parseInt($('redK').value,10)); });
+  $('cntV').addEventListener('keydown',e=>{ if(e.key==='Enter') renderCount(parseInt($('cntV').value,10)); });
+
+  renderAll();
+})();
+</script>
+</body>
+</html>
