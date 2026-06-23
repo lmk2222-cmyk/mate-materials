@@ -440,7 +440,7 @@
   canvas.addEventListener('pointerdown', e=>{
     const [px,py]=localXY(e);
     if(vertical ? py>=splitY : px>=leftW) return;   // 원이 있는 영역에서만 조작
-    dragging=true; canvas.setPointerCapture(e.pointerId);
+    dragging=true; try{ canvas.setPointerCapture(e.pointerId); }catch(_){}
     prevRaw=Math.atan2(cy-py, px-cxL);
     setFromAngle(prevRaw);
     showIntro=false;                  // 사용자가 조작하면 초기 강조 해제
@@ -661,7 +661,7 @@
   function setFromAngle(a0){ if(a0<0) a0+=TAU; theta=clamp(a0,0,TAU); }
   canvas.addEventListener('pointerdown', e=>{
     const [px,py]=localXY(e); if(vertical2 ? py>=splitY : px>=leftW) return;
-    dragging=true; canvas.setPointerCapture(e.pointerId);
+    dragging=true; try{ canvas.setPointerCapture(e.pointerId); }catch(_){}
     prevRaw=Math.atan2(cy-py, px-cxL); setFromAngle(prevRaw); render();
   });
   canvas.addEventListener('pointermove', e=>{
