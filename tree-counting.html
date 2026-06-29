@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>수형도로 세는 수열 — 수능 22번 도전</title>
+<style>
+  :root{
+    --ink:#212529; --muted:#868e96; --card:#f8f9fa; --border:#dee2e6;
+    --accent:#1971c2; --accent-soft:rgba(25,113,214,.10);
+    --ok:#2f9e44; --ok-soft:rgba(47,158,68,.14);
+    --no:#e03131; --no-soft:rgba(224,49,49,.10);
+    --seed:#f76707; --seed-soft:rgba(247,103,7,.14);
+    --line:#ced4da;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; padding:12px 18px 28px; color:var(--ink); line-height:1.5;
+    font-family:"Pretendard","Segoe UI",system-ui,-apple-system,sans-serif; background:#fff}
+  .wrap{max-width:1180px; margin:0 auto}
+  .head{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:8px}
+  h1{font-size:20px; margin:0}
+  .sub{margin:0; color:var(--muted); font-size:13px}
+
+  /* 본 문항 */
+  .prob{background:var(--card); border:1px solid var(--border); border-radius:12px;
+    padding:10px 14px; margin-bottom:10px}
+  .prob .lab{font-size:12px; font-weight:700; color:var(--accent); letter-spacing:.02em}
+  .prob .body{font-size:14px; margin-top:3px}
+  .prob .rec{font-family:"Cascadia Code",Consolas,monospace; font-size:13px; color:#495057}
+  .prob .q{font-weight:700; margin-top:3px}
+
+  /* 활동 전환 탭 */
+  .acts{display:flex; gap:8px; margin-bottom:10px}
+  .acttab{flex:1; padding:10px 12px; border:1px solid var(--border); background:#fff;
+    border-radius:10px; cursor:pointer; font-size:15px; font-weight:600; text-align:center; color:var(--ink)}
+  .acttab.active{border-color:var(--accent); background:var(--accent-soft); color:var(--accent)}
+
+  section.view{display:none; border:1px solid var(--border); border-radius:12px; padding:12px 14px}
+  section.view.active{display:block}
+  section.view > h2{font-size:16px; margin:0 0 4px}
+  section.view > .hint{font-size:13px; color:var(--muted); margin:0 0 10px}
+
+  .rulebar{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:10px}
+  .rule{font-family:"Cascadia Code",Consolas,monospace; font-size:13px; background:var(--card);
+    border:1px solid var(--border); border-radius:8px; padding:4px 9px}
+  .seedtag{font-size:13px; color:var(--seed); font-weight:700}
+
+  button.btn{padding:7px 13px; border:1px solid var(--border); background:#fff; border-radius:9px; cursor:pointer; font-size:14px}
+  button.btn:hover{background:var(--card)}
+  button.btn.go{background:var(--accent); color:#fff; border:none}
+  .toolbar{display:flex; gap:8px; align-items:center; margin-top:12px; flex-wrap:wrap}
+  .status{font-family:"Cascadia Code",Consolas,monospace; font-size:14px; color:var(--accent); min-height:20px}
+
+  /* ① 계산표 */
+  .grid{display:grid; grid-template-columns:repeat(8,1fr); gap:7px}
+  .cell{border:1px solid var(--border); border-radius:8px; padding:5px 4px; text-align:center; background:#fff}
+  .cell .idx{font-size:12px; color:var(--muted)}
+  .cell input{width:100%; border:none; text-align:center; font-size:16px; font-weight:700;
+    outline:none; background:transparent; color:var(--ink); -moz-appearance:textfield}
+  .cell input::-webkit-outer-spin-button,.cell input::-webkit-inner-spin-button{-webkit-appearance:none}
+  .cell.seed{background:var(--seed-soft); border-color:var(--seed)}
+  .cell.seed .val{font-size:16px; font-weight:700; color:var(--seed)}
+  .cell.ok{background:var(--ok-soft); border-color:var(--ok)}
+  .cell.no{background:var(--no-soft); border-color:var(--no)}
+  .cell.focus{box-shadow:0 0 0 2px var(--accent-soft); border-color:var(--accent)}
+  .obs{margin-top:12px; font-size:14px; background:var(--accent-soft); border:1px solid var(--accent);
+    border-radius:10px; padding:9px 12px; color:#0b4a8f}
+
+  .counter{font-size:14px; font-weight:700; color:var(--accent); margin:4px 0 10px}
+  .counter.done{color:var(--ok)}
+
+  /* 범례 */
+  .legend{display:flex; gap:14px; flex-wrap:wrap; font-size:12px; color:var(--muted); margin:2px 0 10px}
+  .legend span{display:inline-flex; align-items:center; gap:5px}
+  .dot{width:13px; height:13px; border-radius:4px; display:inline-block; border:1px solid var(--border)}
+  .dot.seed{background:var(--seed-soft); border-color:var(--seed)}
+  .dot.goal{background:var(--accent-soft); border-color:var(--accent)}
+
+  /* 가로형 수형도 (B) */
+  .scroll{overflow-x:auto; padding:4px 0}
+  .tree, .tree ul{list-style:none; margin:0; padding:0}
+  .tree ul{margin-left:30px}
+  .tree li{position:relative; padding:5px 0 5px 30px}
+  .tree li::before{content:''; position:absolute; left:0; top:0; height:calc(50% + 1px);
+    width:22px; border-left:2px solid var(--line); border-bottom:2px solid var(--line);
+    border-bottom-left-radius:8px}
+  .tree li::after{content:''; position:absolute; left:0; top:0; bottom:0; border-left:2px solid var(--line)}
+  .tree li:last-child::after{display:none}
+  .tree > li{padding-left:0}
+  .tree > li::before, .tree > li::after{display:none}
+
+  .node{display:inline-flex; flex-direction:column; align-items:center; vertical-align:middle;
+    border:1px solid var(--border); border-radius:10px; background:#fff; padding:3px 9px 4px;
+    min-width:50px; box-shadow:0 1px 2px rgba(0,0,0,.04)}
+  .node .idx{font-size:11px; color:var(--muted); white-space:nowrap}
+  .node .val{font-size:17px; font-weight:700; line-height:1.1}
+  .node input{width:40px; border:none; border-bottom:1px solid var(--border); text-align:center;
+    font-size:16px; font-weight:700; outline:none; background:transparent; color:var(--ink); -moz-appearance:textfield}
+  .node input::-webkit-outer-spin-button,.node input::-webkit-inner-spin-button{-webkit-appearance:none}
+  .node.seed{background:var(--seed-soft); border-color:var(--seed)}
+  .node.seed .idx,.node.seed .val{color:var(--seed)}
+  .node.ok{background:var(--ok-soft); border-color:var(--ok)}
+  .node.no{background:var(--no-soft); border-color:var(--no)}
+  .node.goal{background:var(--accent-soft); border-color:var(--accent)}
+  .node.goal .idx{color:var(--accent); font-weight:700}
+  .node.goal .val{color:var(--accent)}
+
+  .edge{display:inline-block; font-family:"Cascadia Code",Consolas,monospace; font-size:11px;
+    color:var(--muted); background:var(--card); border:1px solid var(--border);
+    border-radius:6px; padding:0 5px; margin-right:7px; vertical-align:middle}
+  .edge.p4{color:#9a4a00; background:var(--seed-soft); border-color:var(--seed)}
+  .prune{display:inline-block; font-size:11px; color:#adb5bd; border:1px dashed var(--border);
+    border-radius:7px; padding:2px 8px; background:#fcfcfc; white-space:nowrap}
+
+  /* A: 직접 펼치기 (들여쓰기 트리) */
+  #aRoot .anode{margin:5px 0}
+  #aRoot .achildren{margin-left:24px; border-left:2px solid var(--line); padding-left:14px; margin-top:2px}
+  .abox{display:inline-flex; align-items:center; gap:7px; vertical-align:middle}
+  .abtns{display:inline-flex; gap:6px; margin-left:8px; vertical-align:middle}
+  button.mini{padding:3px 9px; border:1px solid var(--border); background:#fff; border-radius:8px;
+    cursor:pointer; font-size:12px}
+  button.mini.p4{border-color:var(--seed); color:#9a4a00; background:var(--seed-soft)}
+  button.mini.fold{color:var(--muted)}
+  button.mini:hover{filter:brightness(.97)}
+  .pruneflag{font-size:12px; color:#adb5bd; margin-left:8px}
+  .goalflag{font-size:12px; color:var(--accent); font-weight:700; margin-left:8px}
+
+  /* ③ 개수표 */
+  .fgrid{display:grid; grid-template-columns:repeat(10,1fr); gap:7px}
+  .out{font-size:15px; line-height:1.7; margin-top:10px}
+  .out .total{font-size:17px}
+  .out .klist{font-family:"Cascadia Code",Consolas,monospace; background:var(--card);
+    border:1px solid var(--border); border-radius:8px; padding:8px 10px; word-break:break-all; font-size:13px}
+  .hidden{display:none}
+  .cell.goal{background:var(--accent-soft); border-color:var(--accent)}
+  .cell.goal .idx{color:var(--accent); font-weight:700}
+  .warn{font-size:13px; background:#fff8f0; border:1px solid var(--seed); border-radius:10px;
+    padding:9px 12px; color:#9a4a00; margin-bottom:10px}
+
+  @media (max-width:820px){
+    .grid{grid-template-columns:repeat(6,1fr)}
+    .fgrid{grid-template-columns:repeat(5,1fr)}
+    .acttab{font-size:14px; padding:9px 8px}
+  }
+  @media (max-width:520px){
+    .grid{grid-template-columns:repeat(4,1fr)}
+    button.btn{padding:10px 14px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <h1>수형도로 세는 수열 — 수능 22번 도전</h1>
+    <p class="sub">작은 나무를 손으로 그려 세고 → 큰 문제는 경우의 수로 센다.</p>
+  </div>
+
+  <div class="prob">
+    <div class="lab">▶ 오늘의 목표 문항</div>
+    <div class="body">
+      수열 {a<sub>n</sub>} 은 a<sub>1</sub>=1, a<sub>3</sub>=4 이고, 모든 자연수 n 에 대하여<br>
+      <span class="rec">a<sub>2n</sub> = a<sub>n</sub> + 1,&nbsp;&nbsp; a<sub>4n+1</sub> = a<sub>4n+3</sub> = a<sub>n</sub> + 4</span> 를 만족시킨다.
+      <div class="q">a<sub>k</sub> = 10 을 만족시키는 자연수 k의 개수를 구하시오. [4점]</div>
+    </div>
+  </div>
+
+  <div class="acts" id="acts"></div>
+
+  <!-- 활동 ① -->
+  <section class="view">
+    <h2>① 나열 — 규칙으로 항 만들기</h2>
+    <p class="hint">빈칸에 값을 채우면 바로 채점됩니다. 칸을 누르면 어떤 규칙을 쓰는지 아래에 보여줍니다. (주황 = 주어진 시작값)</p>
+    <div class="rulebar">
+      <span class="seedtag">시작값: a<sub>1</sub>=1, a<sub>3</sub>=4</span>
+      <span class="rule">a<sub>2n</sub> = a<sub>n</sub> + 1</span>
+      <span class="rule">a<sub>4n+1</sub> = a<sub>4n+3</sub> = a<sub>n</sub> + 4</span>
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="status" id="status">&nbsp;</div>
+    <div class="toolbar">
+      <button class="btn" id="btnHint">힌트(규칙) 보기</button>
+      <button class="btn" id="btnClear">지우기</button>
+    </div>
+    <div class="obs">💡 채워 보면: 자리(번호)가 커질수록 값은 <b>커지기만</b> 합니다. 줄어드는 일이 없죠.
+      → 그래서 a<sub>k</sub> = 10 인 k 는 <b>유한개</b>! 나무를 그려서 모두 셀 수 있습니다.</div>
+  </section>
+
+  <!-- 활동 ② B. 값 채우기 -->
+  <section class="view">
+    <h2>② 값 채우기 — a<sub>k</sub> = 6 (나무 모양은 주어짐)</h2>
+    <p class="hint">나무 뼈대는 이미 그려져 있어요. 각 항의 <b>값</b>만 채우세요 (= 부모값 + 1 또는 + 4).
+      짝수자리는 <b>+1 (한 갈래)</b>, 4n+1·4n+3 은 <b>+4 (두 갈래)</b>. 값이 6인 잎(★)을 모두 세면 답입니다.</p>
+    <div class="legend">
+      <span><i class="dot seed"></i> 씨앗</span>
+      <span><i class="dot" style="background:#fff"></i> 자라는 항</span>
+      <span><i class="dot goal"></i> ★ 목표값(=6)</span>
+      <span><i class="dot" style="border-style:dashed;background:#fcfcfc"></i> 6 초과 → 가지치기</span>
+    </div>
+    <div class="counter" id="bCounter">찾은 ★ : 0 / 6</div>
+    <div class="scroll"><ul class="tree" id="bTree"></ul></div>
+    <div class="toolbar">
+      <button class="btn" id="bClear">지우기</button>
+      <button class="btn go" id="bReveal">정답 채우기</button>
+    </div>
+  </section>
+
+  <!-- 활동 ③ A. 직접 펼치기 -->
+  <section class="view">
+    <h2>③ 직접 펼치기 — a<sub>k</sub> = 7 (내가 나무를 키운다)</h2>
+    <p class="hint">씨앗 두 개에서 시작합니다. 노드의 <b>[+1 한 갈래]</b>·<b>[+4 두 갈래]</b> 단추로 가지를 펼치고,
+      새 항의 <b>값</b>을 채우세요. 값 = 부모값 + 1 또는 + 4. 값이 7이면 ★, 7을 넘으면 자동으로 가지치기됩니다.</p>
+    <div class="legend">
+      <span><i class="dot seed"></i> 씨앗</span>
+      <span><i class="dot" style="background:#fff"></i> 자라는 항</span>
+      <span><i class="dot goal"></i> ★ 목표값(=7)</span>
+      <span><i class="dot" style="border-style:dashed;background:#fcfcfc"></i> 7 초과 → 가지치기</span>
+    </div>
+    <div class="counter" id="aCounter">찾은 ★ : 0 / 8</div>
+    <div id="aRoot"></div>
+    <div class="toolbar">
+      <button class="btn" id="aReset">처음부터</button>
+    </div>
+  </section>
+
+  <!-- 활동 ③ -->
+  <section class="view">
+    <h2>④ 본 문항 — a<sub>k</sub> = 10 인 k 의 개수</h2>
+    <div class="warn">a<sub>k</sub> = 10 까지 나무를 그리면 가지가 수십·수백 개로 폭발해서 손으로 다 그릴 수 없어요.
+      → ②·③에서 익힌 <b>가지 규칙</b>으로 <b>개수만</b> 차근차근 셉시다.</div>
+    <p class="hint">각 값 n 에 대해 a<sub>k</sub> = n 인 항의 개수 <b>f(n)</b> 을 채우세요. 작은 값부터 채우면 규칙이 보입니다.
+      칸을 누르면 셈 구조를 아래에 보여줍니다. (★ = 최종 답)</p>
+    <div class="rulebar">
+      <span class="rule">f(n) = f(n−1)×1 &nbsp;[+1 한 갈래]&nbsp; + &nbsp;f(n−4)×2 &nbsp;[+4 두 갈래]</span>
+      <span class="seedtag">씨앗: 값1·값4 에 +1</span>
+    </div>
+    <div class="status" id="fStatus">&nbsp;</div>
+    <div class="fgrid" id="fGrid"></div>
+    <div class="toolbar">
+      <button class="btn" id="fHintBtn">힌트(셈 구조) 보기</button>
+      <button class="btn" id="fClear">지우기</button>
+      <button class="btn go" id="fReveal">정답·해설 보기</button>
+    </div>
+    <div class="out hidden" id="fOut"></div>
+  </section>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const $ = id => document.getElementById(id);
+
+  // ── 수열 정의 (씨앗 a1=1, a3=4 / 짝수 +1 / 4n+1·4n+3 +4) ──
+  const SEEDS = {1:1, 3:4};
+  const memoC = {};
+  function reduce(k){
+    if(k===1||k===3) return null;
+    if(k%2===0) return {n:k/2, add:1};
+    return (k%4===1) ? {n:(k-1)/4, add:4} : {n:(k-3)/4, add:4};
+  }
+  function compute(k){
+    if(SEEDS[k]!==undefined) return SEEDS[k];
+    if(memoC[k]!==undefined) return memoC[k];
+    const r=reduce(k);
+    return (memoC[k] = compute(r.n)+r.add);
+  }
+  const memoE = {};
+  function enumerate(v){
+    if(v<=0) return [];
+    if(memoE[v]) return memoE[v];
+    let res=[];
+    for(const idx in SEEDS) if(SEEDS[idx]===v) res.push(+idx);
+    for(const m of enumerate(v-1)) res.push(2*m);          // +1 한 갈래
+    for(const m of enumerate(v-4)){ res.push(4*m+1); res.push(4*m+3); } // +4 두 갈래
+    res=[...new Set(res)].sort((a,b)=>a-b);
+    return (memoE[v]=res);
+  }
+  const fcount = v => enumerate(v).length;
+  function ruleText(k){
+    if(SEEDS[k]!==undefined) return `a<sub>${k}</sub> = ${SEEDS[k]}  (주어진 시작값)`;
+    const r=reduce(k);
+    return `a<sub>${k}</sub> = a<sub>${r.n}</sub> + ${r.add}`;
+  }
+
+  // ── 활동 전환 ──
+  const ACTS=["① 나열","② 값 채우기 (a_k=6)","③ 직접 펼치기 (a_k=7)","④ 본 문항 (a_k=10)"];
+  const actsEl=$('acts');
+  const views=[...document.querySelectorAll('section.view')];
+  let curAct=0;
+  ACTS.forEach((label,i)=>{
+    const b=document.createElement('button'); b.className='acttab';
+    b.innerHTML=label.replace('a_k','a<sub>k</sub>');
+    b.onclick=()=>{ curAct=i; showAct(); };
+    actsEl.appendChild(b);
+  });
+  function showAct(){
+    [...actsEl.children].forEach((b,i)=>b.classList.toggle('active',i===curAct));
+    views.forEach((v,i)=>v.classList.toggle('active',i===curAct));
+  }
+
+  // ─────────────── 활동 ① 계산표 ───────────────
+  const N1=16;
+  let showHint=false, focusK=null;
+  function buildGrid(){
+    const g=$('grid'); g.innerHTML='';
+    for(let k=1;k<=N1;k++){
+      const cell=document.createElement('div'); cell.className='cell';
+      const idx=document.createElement('div'); idx.className='idx'; idx.innerHTML='a<sub>'+k+'</sub>';
+      cell.appendChild(idx);
+      if(SEEDS[k]!==undefined){
+        cell.classList.add('seed');
+        const v=document.createElement('div'); v.className='val'; v.textContent=SEEDS[k];
+        cell.appendChild(v);
+      } else {
+        const inp=document.createElement('input'); inp.type='number';
+        inp.addEventListener('input',()=>{
+          cell.classList.remove('ok','no');
+          if(inp.value==='') return;
+          cell.classList.add(+inp.value===compute(k)?'ok':'no');
+        });
+        inp.addEventListener('focus',()=>{ focusK=k; markFocus(cell);
+          $('status').innerHTML=showHint?ruleText(k):'a<sub>'+k+'</sub> = ?'; });
+        inp.addEventListener('blur',()=>cell.classList.remove('focus'));
+        cell.appendChild(inp);
+      }
+      g.appendChild(cell);
+    }
+  }
+  function markFocus(cell){ [...$('grid').children].forEach(c=>c.classList.remove('focus')); cell.classList.add('focus'); }
+  $('btnHint').onclick=()=>{ showHint=!showHint; $('btnHint').textContent=showHint?'힌트 끄기':'힌트(규칙) 보기';
+    if(focusK!==null) $('status').innerHTML=showHint?ruleText(focusK):'a<sub>'+focusK+'</sub> = ?'; };
+  $('btnClear').onclick=()=>{ [...$('grid').querySelectorAll('input')].forEach(inp=>{ inp.value='';
+    inp.parentElement.classList.remove('ok','no'); }); };
+
+  // ─────────────── 활동 ② 작은 나무 (목표 6) ───────────────
+  const TARGET_B=6, TARGET_A=7;            // ② 값 채우기 목표 / ③ 직접 펼치기 목표
+  const B_GOALS=fcount(TARGET_B), A_GOALS=fcount(TARGET_A);
+  // 나무 뼈대 생성 (값<목표면 +1 한 갈래·+4 두 갈래, +4가 목표 초과면 가지치기)
+  function buildNode(k, add){
+    const v=compute(k);
+    const node={k, v, add, seed:SEEDS[k]!==undefined, goal:v===TARGET_B, kids:[], prune:false};
+    if(v<TARGET_B){
+      node.kids.push(buildNode(2*k, 1));                 // +1 한 갈래 (항상 ≤ 목표)
+      if(v+4<=TARGET_B){ node.kids.push(buildNode(4*k+1,4)); node.kids.push(buildNode(4*k+3,4)); }
+      else node.prune=true;                              // +4 두 갈래가 목표 초과
+    }
+    return node;
+  }
+  const forest=[buildNode(1,null), buildNode(3,null)];
+
+  // ②-B : 값 채우기
+  function liB(node){
+    const edge = node.add!=null ? `<span class="edge ${node.add===4?'p4':''}">+${node.add}</span>` : '';
+    let inner;
+    if(node.seed) inner=`<span class="node seed"><span class="idx">a<sub>${node.k}</sub></span><span class="val">${node.v}</span></span>`;
+    else inner=`<span class="node" data-k="${node.k}"><span class="idx" data-idx="${node.k}">a<sub>${node.k}</sub></span><input type="number" data-bk="${node.k}"></span>`;
+    let childHtml = node.kids.map(liB).join('');
+    if(node.prune) childHtml += `<li><span class="prune">+4 가지 2개 ✂ (6 초과)</span></li>`;
+    return `<li>${edge}${inner}${childHtml?`<ul>${childHtml}</ul>`:''}</li>`;
+  }
+  function renderB(){
+    $('bTree').innerHTML = forest.map(liB).join('');
+    $('bTree').querySelectorAll('input[data-bk]').forEach(inp=>{
+      inp.addEventListener('input',()=>checkB(inp));
+    });
+    updateBCounter();
+  }
+  function checkB(inp){
+    const k=+inp.dataset.bk, node=inp.closest('.node');
+    node.classList.remove('ok','no','goal');
+    const idxEl=node.querySelector('.idx');
+    idxEl.innerHTML='a<sub>'+k+'</sub>';
+    if(inp.value===''){ updateBCounter(); return; }
+    if(+inp.value===compute(k)){
+      if(compute(k)===TARGET_B){ node.classList.add('goal'); idxEl.innerHTML='★ a<sub>'+k+'</sub>'; }
+      else node.classList.add('ok');
+    } else node.classList.add('no');
+    updateBCounter();
+  }
+  function updateBCounter(){
+    const got=$('bTree').querySelectorAll('.node.goal').length;
+    const el=$('bCounter');
+    el.textContent=`찾은 ★ : ${got} / ${B_GOALS}`;
+    el.classList.toggle('done', got===B_GOALS);
+    if(got===B_GOALS) el.textContent+=`  ✓ 완성! a_k = ${TARGET_B} 인 k 는 ${B_GOALS}개`;
+  }
+  $('bClear').onclick=()=>{ $('bTree').querySelectorAll('input[data-bk]').forEach(inp=>{ inp.value='';
+    const node=inp.closest('.node'); node.classList.remove('ok','no','goal');
+    node.querySelector('.idx').innerHTML='a<sub>'+inp.dataset.bk+'</sub>'; }); updateBCounter(); };
+  $('bReveal').onclick=()=>{ $('bTree').querySelectorAll('input[data-bk]').forEach(inp=>{
+    inp.value=compute(+inp.dataset.bk); checkB(inp); }); };
+
+  // ②-A : 직접 펼치기
+  function aNodeEl(k, add){
+    const v=compute(k);
+    const wrap=document.createElement('div'); wrap.className='anode';
+    const box=document.createElement('span'); box.className='abox';
+    const edge = add!=null ? `<span class="edge ${add===4?'p4':''}">+${add}</span>` : '';
+    const seed=SEEDS[k]!==undefined;
+    box.innerHTML = edge + `<span class="node${seed?' seed':''}"><span class="idx">a<sub>${k}</sub></span>`
+      + (seed?`<span class="val">${v}</span>`:`<input type="number">`) + `</span>`;
+    wrap.appendChild(box);
+    const children=document.createElement('div'); children.className='achildren'; children.style.display='none';
+    wrap.appendChild(children);
+    let exp1=false, exp4=false;
+
+    function renderBtns(){
+      box.querySelector('.abtns')?.remove();
+      const btns=document.createElement('span'); btns.className='abtns';
+      if(!exp1){ const b=document.createElement('button'); b.className='mini';    b.textContent='+1 한 갈래'; b.onclick=expand1;  btns.appendChild(b); }
+      if(!exp4){ const b=document.createElement('button'); b.className='mini p4'; b.textContent='+4 두 갈래'; b.onclick=expand4;  btns.appendChild(b); }
+      if(exp1||exp4){ const b=document.createElement('button'); b.className='mini fold'; b.textContent='접기 ⊟'; b.onclick=collapse; btns.appendChild(b); }
+      box.appendChild(btns);
+    }
+    function expand1(){ exp1=true; children.style.display=''; children.appendChild(aNodeElGuarded(2*k,1)); renderBtns(); }
+    function expand4(){ exp4=true; children.style.display='';
+      children.appendChild(aNodeElGuarded(4*k+1,4)); children.appendChild(aNodeElGuarded(4*k+3,4)); renderBtns(); }
+    function collapse(){ exp1=false; exp4=false; children.innerHTML=''; children.style.display='none'; renderBtns(); updateACounter(); }
+
+    if(seed){ renderBtns(); }
+    else {
+      const inp=box.querySelector('input'); const nodeSpan=box.querySelector('.node');
+      inp.addEventListener('input',()=>{
+        nodeSpan.classList.remove('ok','no','goal');
+        box.querySelector('.abtns')?.remove();
+        box.querySelector('.goalflag')?.remove();
+        nodeSpan.querySelector('.idx').innerHTML='a<sub>'+k+'</sub>';
+        exp1=false; exp4=false; children.innerHTML=''; children.style.display='none';   // 값 재입력 시 아래 가지 접기
+        if(inp.value===''){ updateACounter(); return; }
+        if(+inp.value!==v){ nodeSpan.classList.add('no'); updateACounter(); return; }
+        // 값 정답 (가지치기로 막혀 v ≤ 목표만 도달)
+        if(v===TARGET_A){
+          nodeSpan.classList.add('goal'); nodeSpan.querySelector('.idx').innerHTML='★ a<sub>'+k+'</sub>';
+          const f=document.createElement('span'); f.className='goalflag'; f.textContent='★ 목표!'; box.appendChild(f);
+        } else {
+          nodeSpan.classList.add('ok');
+          renderBtns();
+        }
+        updateACounter();
+      });
+    }
+    return wrap;
+  }
+  // +4 펼침 시 목표 초과 자식은 가지치기로 표시
+  function aNodeElGuarded(k, add){
+    const v=compute(k);
+    if(v>TARGET_A){
+      const wrap=document.createElement('div'); wrap.className='anode';
+      const edge = add!=null ? `<span class="edge ${add===4?'p4':''}">+${add}</span>` : '';
+      wrap.innerHTML = `<span class="abox">${edge}<span class="node"><span class="idx">a<sub>${k}</sub></span><span class="val">${v}</span></span><span class="pruneflag">${TARGET_A} 초과 → 가지치기 ✂</span></span>`;
+      return wrap;
+    }
+    return aNodeEl(k, add);
+  }
+  function updateACounter(){
+    const got=$('aRoot').querySelectorAll('.node.goal').length;
+    const el=$('aCounter'); el.textContent=`찾은 ★ : ${got} / ${A_GOALS}`;
+    el.classList.toggle('done', got===A_GOALS);
+    if(got===A_GOALS) el.textContent+=`  ✓ ${A_GOALS}개를 모두 찾았어요!`;
+  }
+  function resetA(){
+    $('aRoot').innerHTML='';
+    $('aRoot').appendChild(aNodeEl(1,null));
+    $('aRoot').appendChild(aNodeEl(3,null));
+    updateACounter();
+  }
+  $('aReset').onclick=resetA;
+
+  // ─────────────── 활동 ④ 개수표 (목표 10) ───────────────
+  const FT=10;
+  let fHint=false, fFocus=null;
+  function fStruct(n){
+    const parts=[];
+    if(n-1>=1) parts.push(`f(${n-1})×1`);
+    if(n-4>=1) parts.push(`f(${n-4})×2`);
+    let s=`f(${n}) = ` + (parts.join(' + ') || '0');
+    const seeds=[]; if(n===1) seeds.push('a<sub>1</sub>'); if(n===4) seeds.push('a<sub>3</sub>');
+    if(seeds.length) s += ` + 씨앗(${seeds.join(', ')})`;
+    return s;
+  }
+  function buildFGrid(){
+    const g=$('fGrid'); g.innerHTML='';
+    for(let n=1;n<=FT;n++){
+      const cell=document.createElement('div'); cell.className='cell'; if(n===FT) cell.classList.add('goal');
+      const idx=document.createElement('div'); idx.className='idx'; idx.innerHTML=(n===FT?'★ ':'')+'f('+n+')';
+      cell.appendChild(idx);
+      const inp=document.createElement('input'); inp.type='number'; inp.min='0';
+      inp.addEventListener('input',()=>{
+        cell.classList.remove('ok','no');
+        if(inp.value==='') return;
+        cell.classList.add(+inp.value===fcount(n)?'ok':'no');
+      });
+      inp.addEventListener('focus',()=>{ fFocus=n; markFFocus(cell);
+        $('fStatus').innerHTML=fHint?fStruct(n):'f('+n+') = ?'; });
+      inp.addEventListener('blur',()=>cell.classList.remove('focus'));
+      cell.appendChild(inp);
+      g.appendChild(cell);
+    }
+  }
+  function markFFocus(cell){ [...$('fGrid').children].forEach(c=>c.classList.remove('focus')); cell.classList.add('focus'); }
+  $('fHintBtn').onclick=()=>{ fHint=!fHint; $('fHintBtn').textContent=fHint?'힌트 끄기':'힌트(셈 구조) 보기';
+    if(fFocus!==null) $('fStatus').innerHTML=fHint?fStruct(fFocus):'f('+fFocus+') = ?'; };
+  $('fClear').onclick=()=>{ [...$('fGrid').querySelectorAll('input')].forEach(inp=>{ inp.value='';
+    inp.parentElement.classList.remove('ok','no'); }); $('fOut').classList.add('hidden'); };
+  $('fReveal').onclick=()=>{
+    [...$('fGrid').querySelectorAll('input')].forEach((inp,i)=>{ inp.value=fcount(i+1);
+      inp.parentElement.classList.remove('no'); inp.parentElement.classList.add('ok'); });
+    const list=enumerate(FT);
+    const out=$('fOut'); out.classList.remove('hidden');
+    out.innerHTML=`<p class="total">f(10) = <b>${list.length}</b> 개 &nbsp;→&nbsp; <b>답: ${list.length}</b></p>`
+      + `<p>f(1)~f(10) : 1, 1, 1, 2, 4, 6, 8, 12, 20, <b>32</b> &nbsp;(f(n)=f(n−1)+2·f(n−4))</p>`
+      + `<p class="klist">a<sub>k</sub> = 10 인 k = ${list.join(', ')}</p>`;
+  };
+
+  // ── 초기화 ──
+  buildGrid();
+  renderB();
+  resetA();
+  buildFGrid();
+  showAct();
+})();
+</script>
+</body>
+</html>
