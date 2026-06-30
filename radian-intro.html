@@ -67,7 +67,6 @@
   .teach b{color:var(--ink)}
 
   /* 탐구 섹션 */
-  .sec-div{border:none; border-top:1px dashed var(--border); margin:44px 0 10px}
   header.sec h1{font-size:22px; margin:0 0 4px}
   header.sec p{margin:0; color:var(--muted); font-size:15px}
   .ro.teal{border-color:#0ca678; box-shadow:0 0 0 2px rgba(12,166,120,.14)}
@@ -79,6 +78,50 @@
   input[type=range]{width:220px; accent-color:#0ca678}
   #q_def{background:rgba(12,166,120,.12)}
   .hidden{display:none}
+
+  /* 단계(활동) 전환 */
+  .activity{display:none}
+  .activity.active{display:block}
+  .stepnav{display:flex; align-items:center; justify-content:center; gap:16px;
+           margin:0 0 18px; padding:10px 0}
+  .stepnav.bottom{margin:26px 0 0; border-top:1px solid var(--border); padding-top:20px}
+  .step-btn{font-size:15px; font-weight:600; padding:10px 20px; cursor:pointer;
+            background:#fff; border:1px solid var(--border); border-radius:10px; color:var(--ink)}
+  .step-btn:hover:not(:disabled){background:var(--card)}
+  .step-btn:disabled{opacity:.38; cursor:default}
+  .step-lab{font-size:14px; color:var(--muted); min-width:54px; text-align:center}
+
+  /* 활동 ③ 특수각: 단위원 + 표 연동 */
+  .q3wrap{display:flex; gap:18px; align-items:center; flex-wrap:wrap; margin-top:6px}
+  .q3stage{flex:1 1 340px}
+  .q3side{flex:1 1 240px; display:flex; flex-direction:column; gap:12px}
+  .r3tablewrap{overflow-x:auto; margin-top:16px; padding-bottom:2px}
+  .r3table{border-collapse:collapse; font-size:15px; margin:0 auto; min-width:100%}
+  .r3table th,.r3table td{border:1px solid var(--border); padding:8px 10px; text-align:center; white-space:nowrap}
+  .r3table th.rowhead{background:var(--card); color:var(--muted); font-weight:600; text-align:right; position:sticky; left:0}
+  .r3table td.c{cursor:pointer}
+  .r3table td.c:hover{background:var(--card)}
+  .r3table td.c.sel{background:var(--hi-soft); font-weight:700; color:var(--ink)}
+  .r3table td.pad{background:#fff}
+  .r3table tr.block2 th,.r3table tr.block2 td{border-top:2px solid var(--axis)}
+
+  /* 활동 ④ 변환 연습 */
+  .q4wrap{display:flex; gap:18px; align-items:center; flex-wrap:wrap; margin-top:6px}
+  .q4stage{flex:1 1 300px}
+  .q4panel{flex:1 1 320px; display:flex; flex-direction:column; gap:12px}
+  .q4prompt{font-size:14px; color:var(--muted)}
+  .q4ask{font-size:30px; font-weight:700; letter-spacing:.3px}
+  .q4opts{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+  .q4opt{font-size:18px; font-weight:600; padding:14px 10px; border:1px solid var(--border);
+         border-radius:10px; background:#fff; cursor:pointer; text-align:center; color:var(--ink)}
+  .q4opt:hover:not(.done){background:var(--card)}
+  .q4opt.done{cursor:default}
+  .q4opt.correct{background:rgba(12,166,120,.15); border-color:#0ca678; color:#0a7a59}
+  .q4opt.wrong{background:rgba(224,49,49,.12); border-color:#e03131; color:#c92a2a}
+  .q4fb{font-size:15px; min-height:24px; padding:4px 0; line-height:1.5}
+  .q4fb.ok{color:#0a7a59}
+  .q4fb.no{color:#c92a2a}
+
   /* 모바일/터치: 탭 영역 키우기 */
   @media (max-width:640px){
     button.angle{padding:9px 12px; font-size:14px}
@@ -91,6 +134,13 @@
 </head>
 <body>
 <div class="wrap">
+  <nav class="stepnav top">
+    <button class="step-btn prev">← 이전</button>
+    <span class="step-lab">1 / 2</span>
+    <button class="step-btn next">다음 →</button>
+  </nav>
+
+  <section class="activity active" id="act1" data-reset="resetBtn">
   <header>
     <h1>호도법 — 각을 실수에 대응시키기</h1>
     <p>왼쪽 단위원 위의 점 &nbsp;↦&nbsp; 오른쪽 수직선 위의 실수</p>
@@ -113,15 +163,16 @@
   <div class="note">왼쪽 원에서 각을 움직이면, 그 각이 자르는 <b>호의 길이</b> — 즉 각에 대응하는 <b>하나의 실수</b> — 가 오른쪽 수직선에 나타납니다.</div>
 
   <div class="controls">
-    <div class="row"><span class="cap">특수각으로 이동</span><span id="angleBtns" class="row" style="gap:6px"></span></div>
+    <div class="row"><span class="cap">정확한 각으로 이동</span><span id="angleBtns" class="row" style="gap:6px"></span></div>
     <div class="row">
       <label class="toggle"><input type="checkbox" id="mt"> 한 바퀴 넘기기</label>
       <label class="toggle"><input type="checkbox" id="neg"> 음의 방향(시계 방향)</label>
       <button class="ghost" id="resetBtn">처음으로</button>
     </div>
   </div>
+  </section>
 
-  <hr class="sec-div" />
+  <section class="activity" id="act2" data-reset="q_reset">
   <header class="sec">
     <h1>탐구 — 원의 크기가 달라지면?</h1>
     <p>단위원이 아닌 원에서도 <b>호의 길이</b>를 그대로 각의 크기로 써도 될까?</p>
@@ -162,6 +213,79 @@
     <b>정의</b> · 원의 크기와 상관없이 일정한 값 <b>ℓ ÷ r</b> 로 각의 크기를 정의합니다 → &nbsp;<b style="font-size:18px">θ = ℓ / r</b>&nbsp; 이것이 <b>호도법(라디안)</b>입니다. 단위원(r = 1)에서는 θ = ℓ 이 되어, 앞 활동에서 <b>호의 길이가 곧 각의 크기</b>였습니다.<br>
     또한 θ = ℓ / r 은 <b>(길이) ÷ (길이)</b> 라서 단위가 서로 약분되어 사라집니다. 그래서 라디안은 <b>단위를 따로 붙이지 않고</b> π/3, 1.5 처럼 수만 씁니다.
   </div>
+  </section>
+
+  <section class="activity" id="act3" data-reset="r3_reset">
+  <header class="sec">
+    <h1>특수각의 라디안 값</h1>
+    <p>자주 쓰는 각을 <b>육십분법(도)</b>과 <b>라디안(π꼴)</b>으로 나란히 본다</p>
+  </header>
+  <div class="teach">
+    <b>왜 180° = π 일까?</b> · 단위원(r = 1)의 둘레는 <b>2π</b>. 그 절반인 <b>반 바퀴(180°)</b>가 그리는 호의 길이는 <b>π</b>다.
+    라디안은 <b>호의 길이 ÷ r</b> 이므로, 180°에 대응하는 라디안은 π ÷ 1 = <b>π</b> → 곧 <b>180° = π</b>.
+    한 바퀴(360°)는 2π, 직각(90°)은 π/2 … 이렇게 나머지 특수각도 따라 정해진다.<br>
+    아래 단위원에서 <b>180°를 선택</b>해, 반 바퀴 호가 곧 π임을 확인해 보세요.
+  </div>
+
+  <p class="hint">단위원 위의 <b>점을 클릭</b>하거나 아래 <b>표의 칸을 클릭</b>해 보세요. 선택한 각이 양쪽에서 함께 강조됩니다.</p>
+
+  <div class="q3wrap">
+    <div class="stage q3stage"><canvas id="board3"></canvas></div>
+    <div class="q3side">
+      <div class="readout" style="margin:0">
+        <div class="ro"><div class="lab">육십분법</div><div class="val" id="r3_deg">–</div></div>
+        <div class="ro key"><div class="lab">라디안</div><div class="val" id="r3_rad">–</div><div class="sub">π꼴 · 단위 없음</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="r3tablewrap">
+    <table class="r3table" id="r3_table"></table>
+  </div>
+
+  <div class="note">
+    <b>그래서 도 → 라디안 변환</b> · 180° = π 이므로 비례로 <b>라디안 = 도 × π/180</b>. 예) 90° = 90 × π/180 = π/2. 반대로 <b>라디안 → 도</b> 는 × 180/π.
+  </div>
+
+  <div class="controls">
+    <div class="row"><button class="ghost" id="r3_reset">처음으로</button></div>
+  </div>
+  </section>
+
+  <section class="activity" id="act4" data-reset="r4_reset">
+  <header class="sec">
+    <h1>도 ↔ 라디안 변환 연습</h1>
+    <p>각을 보고 보기에서 알맞은 값을 고르자 · 한 바퀴 이상·음의 각도 포함</p>
+  </header>
+  <p class="hint">왼쪽 단위원의 <b>회전</b>을 참고해 보기 4개 중 정답을 고르세요. <b style="color:#f76707">주황</b>=양의 방향, <b style="color:#1971c2">파랑</b>=음의 방향입니다.</p>
+
+  <div class="q4wrap">
+    <div class="stage q4stage"><canvas id="board4"></canvas></div>
+    <div class="q4panel">
+      <div class="q4prompt" id="q4_prompt">–</div>
+      <div class="q4ask" id="q4_ask">–</div>
+      <div class="q4opts" id="q4_opts"></div>
+      <div class="q4fb" id="q4_fb"></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="row" style="justify-content:space-between; gap:10px">
+      <span class="cap" id="q4_prog">문제 1 / 12</span>
+      <span class="row" style="gap:8px">
+        <button class="ghost" id="q4_prev">← 이전 문제</button>
+        <button class="ghost" id="q4_next">다음 문제 →</button>
+        <button class="ghost" id="r4_reset">처음부터</button>
+      </span>
+    </div>
+  </div>
+  </section>
+
+  <nav class="stepnav bottom">
+    <button class="step-btn prev">← 이전</button>
+    <span class="step-lab">1 / 2</span>
+    <button class="step-btn next">다음 →</button>
+  </nav>
 </div>
 
 <script>
@@ -180,6 +304,7 @@
   let dragging = false, prevRaw = 0;
   const anim = {active:false, start:0, dur:1600, u:0};
   let showIntro = true;                       // 초기 "호의 길이=반지름" 강조 표시
+  let unrolled = false;                       // 호가 펴진 뒤에만 우측 수직선에 길이 표시
   const hi     = ()=> t<0 ? NEG : POS;        // 부호에 따른 강조색
   const hiSoft = ()=> t<0 ? 'rgba(25,113,214,.10)' : 'rgba(247,103,7,.10)';
   const hiRing = ()=> t<0 ? 'rgba(25,113,214,.35)' : 'rgba(247,103,7,.35)';
@@ -352,19 +477,21 @@
     }
     text("0", X(0), yL+18, {col:INK,size:12,weight:'700'});
 
-    // 펴진 만큼의 선분(강조, 좌측 호와 같은 색). 펴는 중엔 진행한 만큼만.
-    const sgn=Math.sign(t)||1, A=Math.abs(t);
-    const laid = anim.active ? sgn*anim.u*A : t;
-    ctx.strokeStyle=hi(); ctx.lineWidth=5; ctx.lineCap='round';
-    ctx.beginPath(); ctx.moveTo(X(0),yL); ctx.lineTo(X(laid),yL); ctx.stroke(); ctx.lineCap='butt';
+    // 펴진 만큼의 선분·마커·값 — '펴는 중'이거나 '이미 펴진 뒤'에만 표시
+    if(anim.active || unrolled){
+      const sgn=Math.sign(t)||1, A=Math.abs(t);
+      const laid = anim.active ? sgn*anim.u*A : t;
+      ctx.strokeStyle=hi(); ctx.lineWidth=5; ctx.lineCap='round';
+      ctx.beginPath(); ctx.moveTo(X(0),yL); ctx.lineTo(X(laid),yL); ctx.stroke(); ctx.lineCap='butt';
 
-    // 펴지는(굴러가는) 호의 곡선 부분
-    if(anim.active) drawUnroll(anim.u);
+      // 펴지는(굴러가는) 호의 곡선 부분
+      if(anim.active) drawUnroll(anim.u);
 
-    // 마커 + 값
-    const mx=X(laid);
-    ctx.fillStyle=hi(); ctx.beginPath(); ctx.arc(mx,yL,7,0,TAU); ctx.fill();
-    text(pretty(num2(laid)), mx, yL-30, {col:hi(),weight:'700',size:15});
+      // 마커 + 값
+      const mx=X(laid);
+      ctx.fillStyle=hi(); ctx.beginPath(); ctx.arc(mx,yL,7,0,TAU); ctx.fill();
+      text(pretty(num2(laid)), mx, yL-30, {col:hi(),weight:'700',size:15});
+    }
 
     text("실수직선  ( ℝ )", (xA+xB)/2, lineY+36, {col:MUTED,size:13});
   }
@@ -418,12 +545,12 @@
   function tick(now){
     if(!anim.active) return;              // 드래그 등으로 취소됨
     const e=(now-anim.start)/anim.dur;
-    if(e>=1){ anim.active=false; anim.u=1; render(); return; }
+    if(e>=1){ anim.active=false; anim.u=1; unrolled=true; render(); return; }
     anim.u=ease(e); draw(); requestAnimationFrame(tick);
   }
   function placeValue(){                   // 점을 '찍는' 순간: 값 갱신 + 자연스럽게 펴기
     updateReadout();
-    if(!startUnroll()) draw();
+    if(!startUnroll()){ unrolled=true; draw(); }   // 각도 0 등 펼 게 없으면 바로 표시
   }
 
   // ── 입력 ──────────────────────────────────────────────
@@ -444,7 +571,7 @@
     prevRaw=Math.atan2(cy-py, px-cxL);
     setFromAngle(prevRaw);
     showIntro=false;                  // 사용자가 조작하면 초기 강조 해제
-    anim.active=false;                // 누르는 동안은 실시간 표시(펴기는 손을 뗄 때)
+    anim.active=false; unrolled=false; // 드래그 동안은 수직선 비움(펴기는 손을 뗄 때)
     updateReadout(); draw();
   });
   canvas.addEventListener('pointermove', e=>{
@@ -464,7 +591,7 @@
   canvas.addEventListener('pointercancel', ()=>{ dragging=false; });
 
   // 특수각 버튼
-  const ANGLES=[0,30,45,60,90,120,135,150,180,210,225,240,270,300,315,330,360];
+  const ANGLES=[90,180,270,360];   // 드래그로 맞추기 어려운 각으로 정밀 점프 (특수각 학습은 활동 ③)
   const box=document.getElementById('angleBtns');
   ANGLES.forEach(d=>{
     const b=document.createElement('button'); b.className='angle'; b.textContent=d+'°';
@@ -475,7 +602,7 @@
   document.getElementById('mt').onchange  = e=>{ showIntro=false; multiTurn=e.target.checked; updateRange(); render(); };
   document.getElementById('neg').onchange = e=>{ showIntro=false; negative=e.target.checked; updateRange(); render(); };
   document.getElementById('resetBtn').onclick  = ()=>{
-    t=INIT_T; multiTurn=false; negative=false; showIntro=true;
+    t=INIT_T; multiTurn=false; negative=false; showIntro=true; unrolled=false;
     document.getElementById('mt').checked=false;
     document.getElementById('neg').checked=false;
     updateRange(); render();
@@ -697,6 +824,320 @@
   }
   window.addEventListener('resize', resize);
   resize();
+})();
+
+/* ───────────────── 활동 ③ 특수각 라디안 값 (단위원 ↔ 표) ───────────────── */
+(function(){
+  "use strict";
+  const TAU=Math.PI*2;
+  const CIRC='#6c757d', RAD='#adb5bd', AXIS='#adb5bd', MUTED='#868e96', INK='#212529';
+  const HI='#f76707', HIH='rgba(247,103,7,.35)';     // 강조색(주황 = 양의 각)
+
+  const canvas=document.getElementById('board3');
+  if(!canvas) return;
+  const ctx=canvas.getContext('2d');
+
+  // 특수각(도)과 라디안(π꼴)
+  const DEGS=[0,30,45,60,90,120,135,150,180,210,225,240,270,300,315,330,360];
+  function gcd(a,b){return b? gcd(b,a%b): a;}
+  function piFraction(v){
+    const u=Math.PI/12, n=Math.round(v/u);
+    if(n===0) return "0";
+    let num=Math.abs(n), den=12, g=gcd(num,den); num/=g; den/=g;
+    const core=(num===1?"π":num+"π");
+    return (den===1 ? core : core+"/"+den);
+  }
+  const SPECIALS=DEGS.map(d=>({deg:d, rad:d*Math.PI/180, pi:piFraction(d*Math.PI/180)}));
+  const DEFAULT=DEGS.indexOf(90);     // 기본 선택: 90° = π/2
+  let sel=DEFAULT;
+
+  let W=0,H=0,cx=0,cy=0,R=0;
+
+  function text(s,x,y,{size=13,col=INK,align='center',base='middle',weight='normal'}={}){
+    ctx.fillStyle=col; ctx.textAlign=align; ctx.textBaseline=base;
+    ctx.font=`${weight} ${size}px "Pretendard","Segoe UI",system-ui,sans-serif`;
+    ctx.fillText(s,x,y);
+  }
+  function arrow(x,y,dx,dy,s){ ctx.beginPath(); ctx.moveTo(x,y);
+    ctx.lineTo(x-dx*s-dy*s*0.5,y-dy*s+dx*s*0.5); ctx.lineTo(x-dx*s+dy*s*0.5,y-dy*s-dx*s*0.5);
+    ctx.closePath(); ctx.fill(); }
+
+  function layout(){ cx=W/2; cy=H/2; R=Math.max(30, Math.min(W,H)/2 - 46); }
+
+  function draw(){
+    layout();
+    ctx.clearRect(0,0,W,H);
+    // 축
+    ctx.strokeStyle=AXIS; ctx.fillStyle=AXIS; ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.moveTo(cx-R-16,cy); ctx.lineTo(cx+R+16,cy); ctx.stroke(); arrow(cx+R+16,cy,1,0,7);
+    ctx.beginPath(); ctx.moveTo(cx,cy+R+16); ctx.lineTo(cx,cy-R-16); ctx.stroke(); arrow(cx,cy-R-16,0,-1,7);
+    // 단위원
+    ctx.strokeStyle=CIRC; ctx.lineWidth=1.8; ctx.beginPath(); ctx.arc(cx,cy,R,0,TAU); ctx.stroke();
+
+    // 모든 특수각 점 + 도 라벨(선택은 제외 — 아래서 크게)
+    SPECIALS.forEach((s,i)=>{
+      if(i===sel) return;
+      const x=cx+R*Math.cos(s.rad), y=cy-R*Math.sin(s.rad);
+      ctx.fillStyle=RAD; ctx.beginPath(); ctx.arc(x,y,4,0,TAU); ctx.fill();
+      if(s.deg!==360){
+        const lx=cx+(R+16)*Math.cos(s.rad), ly=cy-(R+16)*Math.sin(s.rad);
+        text(s.deg+"°", lx, ly, {col:MUTED,size:11});
+      }
+    });
+
+    // 선택한 각: 호 강조 + 반지름 + 점 + 큰 라벨
+    const s=SPECIALS[sel];
+    ctx.strokeStyle=HI; ctx.lineWidth=4; ctx.lineCap='round';
+    ctx.beginPath();
+    const steps=Math.max(2,Math.ceil(s.rad/0.05));
+    for(let k=0;k<=steps;k++){ const p=s.rad*k/steps, x=cx+R*Math.cos(p), y=cy-R*Math.sin(p); k===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }
+    ctx.stroke(); ctx.lineCap='butt';
+    const px=cx+R*Math.cos(s.rad), py=cy-R*Math.sin(s.rad);
+    ctx.strokeStyle=HI; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(px,py); ctx.stroke();
+    ctx.fillStyle=HI; ctx.beginPath(); ctx.arc(px,py,7,0,TAU); ctx.fill();
+    ctx.strokeStyle=HIH; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(px,py,12,0,TAU); ctx.stroke();
+    const lx=cx+(R+26)*Math.cos(s.rad), ly=cy-(R+26)*Math.sin(s.rad);
+    text(s.deg+"° = "+s.pi, lx, ly, {col:HI,weight:'700',size:15});
+    // 호 길이(= 라디안 값) 라벨 — 제2사분면 사분원 가운데(135° 방향)에 고정
+    if(s.deg!==0){
+      const fa=3*Math.PI/4, rr=R*0.6;
+      text("호 길이 = "+s.pi, cx+rr*Math.cos(fa), cy-rr*Math.sin(fa), {col:HI,size:13,weight:'700'});
+    }
+  }
+
+  function syncTable(){
+    document.getElementById('r3_deg').textContent=SPECIALS[sel].deg+"°";
+    document.getElementById('r3_rad').textContent=SPECIALS[sel].pi;
+    table.querySelectorAll('td.c').forEach(td=>td.classList.toggle('sel', +td.dataset.i===sel));
+  }
+  function render(){ draw(); syncTable(); }
+  function setSel(i){ sel=(i+SPECIALS.length)%SPECIALS.length; render(); }
+
+  // 표 생성(두 묶음 = 4행: 0°~180° / 210°~360°) + 칸 클릭
+  const table=document.getElementById('r3_table');
+  const N=SPECIALS.length, half=Math.ceil(N/2);
+  function rowCells(start, key){
+    let out="";
+    for(let c=0;c<half;c++){
+      const i=start+c;
+      if(i<N){ const s=SPECIALS[i]; out+=`<td class="c" data-i="${i}">${key==='deg'? s.deg+'°' : s.pi}</td>`; }
+      else out+='<td class="pad"></td>';
+    }
+    return out;
+  }
+  table.innerHTML=
+    '<tr><th class="rowhead">육십분법</th>'+rowCells(0,'deg')+'</tr>'+
+    '<tr><th class="rowhead">라디안</th>'+rowCells(0,'rad')+'</tr>'+
+    '<tr class="block2"><th class="rowhead">육십분법</th>'+rowCells(half,'deg')+'</tr>'+
+    '<tr><th class="rowhead">라디안</th>'+rowCells(half,'rad')+'</tr>';
+  table.querySelectorAll('td.c').forEach(td=> td.addEventListener('click', ()=>setSel(+td.dataset.i)) );
+
+  // 캔버스 클릭 → 가장 가까운 특수각
+  function localXY(e){ const r=canvas.getBoundingClientRect(); return [e.clientX-r.left, e.clientY-r.top]; }
+  canvas.addEventListener('pointerdown', e=>{
+    const [mx,my]=localXY(e);
+    let a=Math.atan2(cy-my, mx-cx); if(a<0) a+=TAU;
+    let best=0, bd=1e9;
+    SPECIALS.forEach((s,i)=>{ let d=Math.abs((((s.rad-a)%TAU+TAU+Math.PI)%TAU)-Math.PI); if(d<bd){bd=d; best=i;} });
+    setSel(best);
+  });
+
+  document.getElementById('r3_reset').onclick=()=>setSel(DEFAULT);
+
+  function resize(){
+    const cssW=canvas.clientWidth || canvas.parentElement.clientWidth;
+    const cssH=Math.round(Math.max(300, Math.min(440, cssW*0.92)));
+    canvas.style.height=cssH+'px';
+    const dpr=window.devicePixelRatio||1;
+    canvas.width=Math.round(cssW*dpr); canvas.height=Math.round(cssH*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    W=cssW; H=cssH; render();
+  }
+  window.addEventListener('resize', resize);
+  resize();
+})();
+
+/* ───────────────── 활동 ④ 도 ↔ 라디안 변환 연습 (객관식) ───────────────── */
+(function(){
+  "use strict";
+  const TAU=Math.PI*2;
+  const POS='#f76707', NEG='#1971c2';                 // 양의 방향=주황, 음의 방향=파랑
+  const CIRC='#6c757d', RAD='#adb5bd', AXIS='#adb5bd', MUTED='#868e96', INK='#212529';
+
+  const canvas=document.getElementById('board4');
+  if(!canvas) return;
+  const ctx=canvas.getContext('2d');
+
+  function gcd(a,b){return b? gcd(b,a%b): a;}
+  function piFraction(v){
+    const u=Math.PI/12, n=Math.round(v/u);
+    if(n===0) return "0";
+    const sign=n<0?"−":"";
+    let num=Math.abs(n), den=12, g=gcd(num,den); num/=g; den/=g;
+    const core=(num===1?"π":num+"π");
+    return sign+(den===1?core:core+"/"+den);
+  }
+  const degLabel=d=> (d<0?"−":"")+Math.abs(d)+"°";
+
+  // 문제: 사분면별 2+, 한 바퀴 이상 2+, 음의 방향 2+ / 방향(d2r·r2d) 섞기
+  const PROB=[
+    {deg:30,  dir:'d2r'}, {deg:60,  dir:'r2d'},
+    {deg:120, dir:'d2r'}, {deg:150, dir:'r2d'},
+    {deg:210, dir:'d2r'}, {deg:240, dir:'r2d'},
+    {deg:300, dir:'d2r'}, {deg:330, dir:'r2d'},
+    {deg:390, dir:'d2r'}, {deg:450, dir:'r2d'},
+    {deg:-45, dir:'d2r'}, {deg:-150,dir:'r2d'}
+  ];
+  const TOTAL=PROB.length;
+
+  let idx=0;
+  const optsCache=[], correctCache=[], chosen=[];   // chosen[i] = 고른 보기 index(미응답이면 undefined)
+
+  function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+  let probs = shuffle(PROB.slice());   // 표시 순서(무작위) — '처음부터' 누르면 다시 섞임
+
+  function buildFor(i){
+    const p=probs[i], deg=p.deg;
+    const cand=[deg+30,deg-30,deg+90,deg-90,deg+180,-deg,180-deg,360-deg];
+    const set=[]; for(const c of cand){ if(c!==deg && !set.includes(c)) set.push(c); }
+    shuffle(set);
+    const degs=shuffle([deg, ...set.slice(0,3)]);
+    let opts, correct;
+    if(p.dir==='d2r'){ opts=degs.map(d=>piFraction(d*Math.PI/180)); correct=opts.indexOf(piFraction(deg*Math.PI/180)); }
+    else            { opts=degs.map(d=>degLabel(d));               correct=opts.indexOf(degLabel(deg)); }
+    optsCache[i]=opts; correctCache[i]=correct;
+  }
+  function ensure(i){ if(!optsCache[i]) buildFor(i); }
+
+  function solution(p){
+    const r=piFraction(p.deg*Math.PI/180);
+    return p.dir==='d2r' ? (degLabel(p.deg)+" × π/180 = "+r)
+                         : (r+" × 180/π = "+degLabel(p.deg));
+  }
+
+  // ── 캔버스(단위원 회전) ──
+  let W=0,H=0,cx=0,cy=0,R=0;
+  function text(s,x,y,{size=13,col=INK,align='center',base='middle',weight='normal'}={}){
+    ctx.fillStyle=col; ctx.textAlign=align; ctx.textBaseline=base;
+    ctx.font=`${weight} ${size}px "Pretendard","Segoe UI",system-ui,sans-serif`;
+    ctx.fillText(s,x,y);
+  }
+  function arrow(x,y,dx,dy,s){ ctx.beginPath(); ctx.moveTo(x,y);
+    ctx.lineTo(x-dx*s-dy*s*0.5,y-dy*s+dx*s*0.5); ctx.lineTo(x-dx*s+dy*s*0.5,y-dy*s-dx*s*0.5);
+    ctx.closePath(); ctx.fill(); }
+
+  function drawCircle(){
+    cx=W/2; cy=H/2; R=Math.max(30, Math.min(W,H)/2 - 34);
+    ctx.clearRect(0,0,W,H);
+    // 축
+    ctx.strokeStyle=AXIS; ctx.fillStyle=AXIS; ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.moveTo(cx-R-14,cy); ctx.lineTo(cx+R+14,cy); ctx.stroke(); arrow(cx+R+14,cy,1,0,7);
+    ctx.beginPath(); ctx.moveTo(cx,cy+R+14); ctx.lineTo(cx,cy-R-14); ctx.stroke(); arrow(cx,cy-R-14,0,-1,7);
+    // 단위원
+    ctx.strokeStyle=CIRC; ctx.lineWidth=1.8; ctx.beginPath(); ctx.arc(cx,cy,R,0,TAU); ctx.stroke();
+    // 시작 반지름(+x)
+    ctx.strokeStyle=RAD; ctx.lineWidth=1.4; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+R,cy); ctx.stroke();
+
+    const p=probs[idx], rad=p.deg*Math.PI/180, col=rad<0?NEG:POS;
+    const shrink=phi=>R*(1-0.05*Math.min(2.5, Math.abs(phi)/TAU));   // 회전 많을수록 안쪽(스파이럴)
+    // 회전 호
+    ctx.strokeStyle=col; ctx.lineWidth=5; ctx.lineCap='round';
+    ctx.beginPath();
+    const steps=Math.max(8, Math.ceil(Math.abs(rad)/0.03));
+    for(let k=0;k<=steps;k++){ const phi=rad*k/steps, rr=shrink(phi); const x=cx+rr*Math.cos(phi), y=cy-rr*Math.sin(phi); k===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }
+    ctx.stroke(); ctx.lineCap='butt';
+    // 종단 반지름 + 점
+    const er=shrink(rad), px=cx+er*Math.cos(rad), py=cy-er*Math.sin(rad);
+    ctx.strokeStyle=col; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(px,py); ctx.stroke();
+    ctx.fillStyle=col; ctx.beginPath(); ctx.arc(px,py,7,0,TAU); ctx.fill();
+    // 캡션(방향·회전수)
+    const turns=Math.abs(rad)/TAU;
+    let cap = rad<0 ? "음의 방향(시계 방향)" : "양의 방향(반시계)";
+    if(turns>1) cap += " · 한 바퀴 이상";
+    text(cap, cx, cy+R+22, {col:MUTED,size:12});
+  }
+
+  // ── 패널(문제·보기·피드백·진행) ──
+  const el=id=>document.getElementById(id);
+  function paintQuestion(){
+    const p=probs[idx];
+    el('q4_prompt').innerHTML = p.dir==='d2r' ? "육십분법 → 라디안 · 이 각은 몇 <b>라디안</b>?"
+                                              : "라디안 → 육십분법 · 이 각은 몇 <b>도</b>?";
+    el('q4_ask').textContent  = p.dir==='d2r' ? degLabel(p.deg) : piFraction(p.deg*Math.PI/180);
+  }
+  function paintOptions(){
+    const box=el('q4_opts'); box.innerHTML="";
+    const done = chosen[idx]!=null;
+    optsCache[idx].forEach((opt,i)=>{
+      const b=document.createElement('button'); b.className='q4opt'; b.textContent=opt;
+      if(done){
+        b.classList.add('done');
+        if(i===correctCache[idx]) b.classList.add('correct');
+        else if(i===chosen[idx])  b.classList.add('wrong');
+      } else {
+        b.addEventListener('click', ()=>choose(i));
+      }
+      box.appendChild(b);
+    });
+  }
+  function paintFeedback(){
+    const fb=el('q4_fb'), done=chosen[idx]!=null;
+    if(!done){ fb.className='q4fb'; fb.textContent=""; return; }
+    const ok = chosen[idx]===correctCache[idx];
+    fb.className='q4fb '+(ok?'ok':'no');
+    fb.innerHTML = (ok?"정답! ":"아쉬워요. ") + solution(probs[idx]);
+  }
+  function paintProgress(){
+    const ans = chosen.filter(c=>c!=null).length;
+    const cor = chosen.reduce((k,c,i)=> k + (c!=null && c===correctCache[i] ? 1:0), 0);
+    el('q4_prog').textContent = `문제 ${idx+1} / ${TOTAL} · 맞힘 ${cor} / 푼 ${ans}`;
+    el('q4_prev').disabled = idx===0;
+    el('q4_next').disabled = idx===TOTAL-1;
+  }
+  function renderAll(){ ensure(idx); drawCircle(); paintQuestion(); paintOptions(); paintFeedback(); paintProgress(); }
+
+  function choose(i){ if(chosen[idx]!=null) return; chosen[idx]=i; renderAll(); }
+  function go(n){ idx=Math.max(0,Math.min(TOTAL-1,n)); renderAll(); }
+
+  el('q4_prev').onclick=()=>go(idx-1);
+  el('q4_next').onclick=()=>go(idx+1);
+  el('r4_reset').onclick=()=>{ idx=0; probs=shuffle(PROB.slice()); chosen.length=0; optsCache.length=0; correctCache.length=0; renderAll(); };
+
+  function resize(){
+    const cssW=canvas.clientWidth || canvas.parentElement.clientWidth;
+    const cssH=Math.round(Math.max(280, Math.min(420, cssW*0.92)));
+    canvas.style.height=cssH+'px';
+    const dpr=window.devicePixelRatio||1;
+    canvas.width=Math.round(cssW*dpr); canvas.height=Math.round(cssH*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    W=cssW; H=cssH; drawCircle();
+  }
+  window.addEventListener('resize', resize);
+  renderAll(); resize();
+})();
+
+/* ───────────── 단계(활동) 전환 네비게이션 ───────────── */
+(function(){
+  "use strict";
+  const acts  = Array.from(document.querySelectorAll('.activity'));
+  const prevs = document.querySelectorAll('.step-btn.prev');
+  const nexts = document.querySelectorAll('.step-btn.next');
+  const labs  = document.querySelectorAll('.step-lab');
+  let i = 0;
+  function show(n){
+    i = Math.max(0, Math.min(acts.length-1, n));
+    acts.forEach((a,k)=>a.classList.toggle('active', k===i));
+    prevs.forEach(b=>b.disabled = i===0);
+    nexts.forEach(b=>b.disabled = i===acts.length-1);
+    labs.forEach(l=>l.textContent = (i+1)+" / "+acts.length);
+    window.scrollTo(0,0);
+    window.dispatchEvent(new Event('resize'));   // 보이게 된 캔버스 다시 그리기
+    const rid = acts[i].dataset.reset;           // 전환할 때마다 그 활동을 초기화면 상태로
+    if(rid){ const rb=document.getElementById(rid); if(rb) rb.click(); }
+  }
+  prevs.forEach(b=>b.onclick=()=>show(i-1));
+  nexts.forEach(b=>b.onclick=()=>show(i+1));
+  show(0);
 })();
 </script>
 </body>
